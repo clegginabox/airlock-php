@@ -1,0 +1,25 @@
+version: '3'
+
+tasks:
+    phpstan:
+        desc: Runs PHPStan
+        cmds:
+            - php vendor/bin/phpstan analyse --memory-limit=512M
+
+    phpcs:
+        desc: Runs PHPCS
+        cmds:
+            - php vendor/bin/phpcs --standard=ruleset.xml -v -p -s --colors
+
+    phpcbf:
+        desc: Runs PHPCBF
+        cmds:
+            - php vendor/bin/phpcbf --standard=ruleset.xml
+
+    rector:
+        desc: Runs Rector
+        cmds:
+            - php vendor/bin/rector process --dry-run
+
+
+

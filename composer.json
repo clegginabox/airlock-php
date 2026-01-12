@@ -1,0 +1,45 @@
+{
+    "name": "clegginabox/airlock",
+    "description": "",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Clegginabox\\Airlock\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Clegginabox\\Airlock\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Paul Clegg",
+            "homepage": "https://clegginabox.co.uk/"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "symfony/semaphore": "^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "12.5.4",
+        "rector/rector": "^2.3",
+        "slevomat/coding-standard": "^8.26",
+        "squizlabs/php_codesniffer": "^4.0",
+        "symfony/framework-bundle": "^8.0",
+        "symfony/mercure": "^0.7.2"
+    },
+    "suggest": {
+        "symfony/mercure": "Required to use the MercureAirlockNotifier."
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "minimum-stability": "stable"
+}
