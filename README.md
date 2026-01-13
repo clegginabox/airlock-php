@@ -140,40 +140,6 @@ $airlock->withAdmitted('job:invoice', function () {
 });
 ```
 
-### Multi-Tenant Throttle (Per Customer Limits)
-
-The Problem: One noisy customer can starve others. You want per-tenant concurrency caps.
-
-The Solution: Resource namespacing.
-
-```php
-$resource = "tenant:{$tenantId}:imports";
-
-$seal = new SemaphoreSeal(... resource: $resource, limit: 2, ttlInSeconds: 60);
-$airlock = new OpportunisticAirlock($seal);
-
-$airlock->withAdmitted($tenantId, function () use ($tenantId) {
-    $this->runImport($tenantId);
-});
-```
-
-### “Fail Closed” Maintenance Gate (Kill-switch)
-
-The Problem: You’re being hammered or doing maintenance. You want to shut the expensive origin off instantly.
-
-The Solution: Airlock that checks a toggle key first.
-
-```php
-if ($redis->get('airlock:maintenance') === '1') {
-    http_response_code(503);
-    echo "Maintenance";
-    exit;
-}
-
-$result = $airlock->enter($id);
-```
-It’s simple, but extremely useful.
-
 ## PHP
 
 ```php
