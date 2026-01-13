@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Seal;
 
-class CooldownSeal implements RemoteSeal, NonReleasableSeal, RequiresTtl
+interface Seal
 {
+    public function tryAcquire(): ?string;
 }

@@ -111,7 +111,8 @@ class BackpressureQueue implements QueueInterface
         private QueueInterface $inner,
         private HealthCheckerInterface $healthChecker,
         private float $minHealthToAdmit = 0.2,
-    ) {}
+    ) {
+    }
 
     // Your implementation here
     public function add(string $identifier, int $priority = 0): int

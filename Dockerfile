@@ -5,4 +5,4 @@ WORKDIR /app
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
 # Install PHP extensions
-RUN install-php-extensions redis
+RUN install-php-extensions redis memcached zookeeper

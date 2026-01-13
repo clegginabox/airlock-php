@@ -22,6 +22,8 @@
     "require": {
         "php": "^8.4",
         "ext-redis": "*",
+        "ext-memcached": "*",
+        "ext-zookeeper": "*",
         "symfony/console": "^8.0",
         "symfony/lock": "^8.0",
         "symfony/semaphore": "^8.0"
@@ -37,6 +39,7 @@
         "rector/rector": "^2.3",
         "slevomat/coding-standard": "^8.26",
         "squizlabs/php_codesniffer": "^4.0",
+        "symfony/amazon-dynamo-db-lock": "^8.0",
         "symfony/framework-bundle": "^8.0",
         "symfony/mercure": "^0.7.2",
         "symfony/rate-limiter": "^8.0",

@@ -7,4 +7,6 @@ namespace Clegginabox\Airlock\Bridge\Laravel\Seal;
 /**
  * Wraps Illuminate\Cache\RateLimiter
  */
-class LaravelRateLimiterSeal {}
+class LaravelRateLimiterSeal
+{
+}
