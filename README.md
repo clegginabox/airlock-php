@@ -92,7 +92,7 @@ use Clegginabox\Airlock\QueueAirlock;
 use Clegginabox\Airlock\Queue\RedisLotteryQueue;
 
 $seal = new SemaphoreSeal(... limit: 50);
-$queue = new RedisLotteryQueue($redis);
+$queue = new RedisAgingLotteryQueue($redis);
 
 $airlock = new QueueAirlock($seal, $queue);
 ```
@@ -139,24 +139,6 @@ $airlock->withAdmitted('job:invoice', function () {
     // guaranteed single-flight
 });
 ```
-
-
-
-```php
-// when a slot frees:
-$head = $queue->peek();
-$reservations->reserve($head, ttl: 20);
-$notifier->notify($head, "You’re up! Claim within 20s");
-
-// client calls /claim:
-if (!$reservations->isReservedFor($userId)) {
-    return new JsonResponse(['error' => 'missed'], 409);
-}
-
-$token = $seal->tryAcquire(); // now take real capacity
-return new JsonResponse(['token' => $token]);
-```
-This solves “dead head” cleanly.
 
 ### Multi-Tenant Throttle (Per Customer Limits)
 
