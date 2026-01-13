@@ -1,8 +1,11 @@
-# Airlock
+# airlock-php
 
 A distributed mutex with civilized waiting
 
 ___British-style queuing for your code and infra___
+
+> [!WARNING]
+> **Work in Progress** - This library is under active development and not yet production-ready. APIs may change, some implementations are stubs, and test coverage is incomplete. Use at your own risk, contributions welcome.
 
 ## The Core Idea
 
