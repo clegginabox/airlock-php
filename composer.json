@@ -27,8 +27,12 @@
         "symfony/semaphore": "^8.0"
     },
     "require-dev": {
+        "amphp/sync": "^2.3",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "12.5.4",
+        "react/async": "^4.3",
+        "react/event-loop": "^1.6",
+        "react/promise": "^3.3",
         "rector/rector": "^2.3",
         "slevomat/coding-standard": "^8.26",
         "squizlabs/php_codesniffer": "^4.0",

@@ -5,125 +5,166 @@ British-style queuing for your apps.
 
 Library + optional Symfony bundle to coordinate access to limited resources using a queue, a seal, and an optional notifier.
 
-## Recipes
+## The Core Idea
 
-### Reddit Hug Shield (Traffic Cop)
+An Airlock is composed of:
+- a Seal (how capacity is enforced)
+- an Admission Strategy (who gets in next)
+- optional Notifier (how waiters are told)
 
-*The Problem:* You have a standard website (WordPress, Laravel, etc.) on a modest server. A viral link sends 5,000 users at once. Your database locks up, PHP-FPM consumes all RAM, and the server crashes (HTTP 500/502).
+Swap one piece, get a different system.
 
-*The Solution:* A "Soft Gate" that runs before your framework boots. It allows a safe number of users (e.g., 20) to access the site concurrently, while everyone else sees a lightweight "Server Busy" page that auto-retries.
+## Best-Effort / Anti-Hug Gate
+
+Behaviour:
+- No fairness guarantees
+- First request to hit free capacity wins
+- Fast, simple, resilient
 
 ```php
-// prepend.php (Include this at the very top of public/index.php)
-
-use Clegginabox\Airlock\PollingAirlock;
+use Clegginabox\Airlock\OpportunisticAirlock;
 use Clegginabox\Airlock\Seal\SemaphoreSeal;
 use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Semaphore\Store\RedisStore;
 
-// 1. Bypass: If user already has a pass, let them through
-if (isset($_COOKIE['airlock_pass'])) {
-    // Refresh cookie to keep them logged in while active
-    setcookie('airlock_pass', $_COOKIE['airlock_pass'], time() + 60, '/', '', true, true);
-    return;
-}
+$redis = new Redis();
+$redis->connect('127.0.0.1');
 
+// Allow up to N concurrent “expensive” requests.
 $seal = new SemaphoreSeal(
-    factory: new SemaphoreFactory(new RedisStore()),
-    resource: 'traffic_shield',
-    limit: 15, // Only 15 heavy PHP scripts running at once
-    ttlInSeconds: 60
+    factory: new SemaphoreFactory(new RedisStore($redis)),
+    resource: 'site_capacity',
+    limit: 20,
+    ttlInSeconds: 30,
+    autoRelease: false,
 );
 
-$airlock = new PollingAirlock($seal);
+$airlock = new OpportunisticAirlock($seal);
 
-// 3. Attempt Entry
-$result = $airlock->enter();
-
-if ($result->isAdmitted()) {
-    // Success: Give them a VIP pass for 60 seconds
-    setcookie('airlock_pass', $result->getToken(), time() + 60, '/', '', true, true);
-    return; // Let the framework load
-}
-
-// 4. Failure: Lightweight "Busy" Page
-http_response_code(503);
-echo "<html><head><meta http-equiv='refresh' content='5'></head><body>";
-echo "<h1>Server Busy</h1><p>We are experiencing high traffic. Retrying in 5s...</p>";
-echo "</body></html>";
-exit; // Stop PHP immediately (saves RAM)
+$result = $airlock->enter($clientId);
 ```
 
-### "Ticketmaster" (Fair Waiting Room)
+## Strict Fairness (FIFO)
 
-*The Problem:* You are running a high-demand event (e.g., product drop, ticket sale). Fairness is critical. Users must be processed in the exact order they arrived (FIFO), and they need to see their position in line.
-
-*The Solution:* A persistent Queue backed by Redis.
+Behaviour:
+- Exact arrival order
+- Deterministic
+- Dead heads must be handled explicitly
 
 ```php
-// Controller / API Endpoint
-
 use Clegginabox\Airlock\QueueAirlock;
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
-// ... imports ...
 
-
-$seal = new SemaphoreSeal(
-    factory: new SemaphoreFactory(new RedisStore()),
-    resource: 'ticket_sales',
-    limit: 50, // 50 users at a time
-    ttlInSeconds: 60
-);
+$seal = new SemaphoreSeal(... limit: 50);
 $queue = new RedisFifoQueue($redis);
-$airlock = new QueueAirlock($seal, $queue, $notifier);
+
+$airlock = new QueueAirlock($seal, $queue);
 
 $result = $airlock->enter($userId);
-
-if ($result->isAdmitted()) {
-    // The user is IN. 
-    // Return the token so the frontend can attach it to future requests.
-    return new JsonResponse(['status' => 'admitted', 'token' => $result->getToken()]);
-}
-
-// The user is WAITING.
-return new JsonResponse([
-    'status' => 'queued',
-    'position' => $result->getPosition(), // e.g., 452
-    'message' => "You are number {$result->getPosition()} in line."
-], 202);
 ```
 
-### Cron Overlap Prevention
-
-*The Problem:* You have a scheduled task (e.g., php bin/console app:generate-report) that runs every minute. Sometimes the report takes 5 minutes to generate. This causes multiple instances to pile up, crashing the server or sending duplicate emails.
-
-*The Solution:*  A blocking lock that ensures only one instance runs at a time. Subsequent runs wait their turn or timeout.
+## Lottery (Fast, Unfair)
+Behaviour:
+- No ordering
+- High throughput
+- Self-healing under disconnects
 
 ```php
-// bin/console app:worker
+use Clegginabox\Airlock\QueueAirlock;
+use Clegginabox\Airlock\Queue\RedisLotteryQueue;
 
-use Clegginabox\Airlock\Seal\LockSeal;
-// ...
+$seal = new SemaphoreSeal(... limit: 50);
+$queue = new RedisLotteryQueue($redis);
 
-$seal = new LockSeal(..., limit: 1);
-$airlock = new QueueAirlock($seal, ...);
-
-try {
-    // Wait up to 5 seconds to get the lock.
-    $airlock->withAdmitted('report-worker', function () {
-        echo "Generating Report... (I am the only one running)\n";
-        sleep(100);         
-    }, timeoutSeconds: 5);
-
-} catch (Exception $e) {
-    // Lock held by another process. Exit gracefully.
-    echo "Skipping run: Another worker is busy.\n";
-}
+$airlock = new QueueAirlock($seal, $queue);
 ```
 
-### Throttling Legacy Systems
+## Aging Lottery (Fair-ish)
+Behaviour:
+- No ordering
+- High throughput
+- Self-healing under disconnects
+
+```php
+use Clegginabox\Airlock\QueueAirlock;
+use Clegginabox\Airlock\Queue\RedisLotteryQueue;
+
+$seal = new SemaphoreSeal(... limit: 50);
+$queue = new RedisLotteryQueue($redis);
+
+$airlock = new QueueAirlock($seal, $queue);
+```
+
+## Singleton / Idempotency
+
+Behaviour:
+- Exactly one at a time
+- No queue UI
+- Perfect for cron & user actions
+
+```php
+use Clegginabox\Airlock\OpportunisticAirlock;
+use Clegginabox\Airlock\Seal\LockSeal;
+
+$seal = new LockSeal();
+$airlock = new OpportunisticAirlock($seal);
+
+$airlock->withAdmitted('job:invoice', function () {
+    // guaranteed single-flight
+});
+```
 
 
+
+```php
+// when a slot frees:
+$head = $queue->peek();
+$reservations->reserve($head, ttl: 20);
+$notifier->notify($head, "You’re up! Claim within 20s");
+
+// client calls /claim:
+if (!$reservations->isReservedFor($userId)) {
+    return new JsonResponse(['error' => 'missed'], 409);
+}
+
+$token = $seal->tryAcquire(); // now take real capacity
+return new JsonResponse(['token' => $token]);
+```
+This solves “dead head” cleanly.
+
+### Multi-Tenant Throttle (Per Customer Limits)
+
+The Problem: One noisy customer can starve others. You want per-tenant concurrency caps.
+
+The Solution: Resource namespacing.
+
+```php
+$resource = "tenant:{$tenantId}:imports";
+
+$seal = new SemaphoreSeal(... resource: $resource, limit: 2, ttlInSeconds: 60);
+$airlock = new OpportunisticAirlock($seal);
+
+$airlock->withAdmitted($tenantId, function () use ($tenantId) {
+    $this->runImport($tenantId);
+});
+```
+
+### “Fail Closed” Maintenance Gate (Kill-switch)
+
+The Problem: You’re being hammered or doing maintenance. You want to shut the expensive origin off instantly.
+
+The Solution: Airlock that checks a toggle key first.
+
+```php
+if ($redis->get('airlock:maintenance') === '1') {
+    http_response_code(503);
+    echo "Maintenance";
+    exit;
+}
+
+$result = $airlock->enter($id);
+```
+It’s simple, but extremely useful.
 
 ## PHP
 
@@ -168,7 +209,7 @@ $queue = new RedisFifoQueue($redis);
 // NullAirlockNotifier or MercureAirlockNotifier
 $notifier = new NullAirlockNotifier();
 
-// QueueAirlock or a free for all with PollingAirlock
+// QueueAirlock or a free for all with OpportunisticAirlock
 $airlock = new QueueAirlock(
     seal: $seal,
     queue: $queue,
