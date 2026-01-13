@@ -15,8 +15,8 @@ use Clegginabox\Airlock\Seal\LockSeal;
 use Clegginabox\Airlock\Seal\SemaphoreSeal;
 use Redis;
 use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Lock\Store\RedisStore as LockRedisStore;
+use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Semaphore\Store\RedisStore as SemaphoreRedisStore;
 
 final readonly class AirlockFactory

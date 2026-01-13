@@ -70,7 +70,6 @@ final readonly class LockSeal implements SealInterface
             $lock->refresh($effectiveTtl);
 
             return serialize($key);
-
         } catch (LockExpiredException | LockConflictedException $e) {
             throw new LeaseExpiredException($token, $e->getMessage());
         } catch (Throwable $e) {

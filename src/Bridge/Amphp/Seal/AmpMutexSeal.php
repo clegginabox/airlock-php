@@ -28,7 +28,8 @@ final class AmpMutexSeal implements SealInterface
         private readonly Mutex $mutex,
         private readonly string $resource = 'airlock',
         private readonly ?float $ttlInSeconds = null, // optional "soft TTL" you enforce yourself
-    ) {}
+    ) {
+    }
 
     public function tryAcquire(): ?string
     {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Bridge\ReactPhp;
 
 use Clegginabox\Airlock\AirlockInterface;
-use React\EventLoop\Loop;
 use React\Promise\PromiseInterface;
 use RuntimeException;
 
@@ -14,7 +13,9 @@ use function React\Async\delay;
 
 final readonly class AsyncAirlock
 {
-    public function __construct(private AirlockInterface $airlock) {}
+    public function __construct(private AirlockInterface $airlock)
+    {
+    }
 
     /**
      * Wait until admitted, then resolve with the seal token.

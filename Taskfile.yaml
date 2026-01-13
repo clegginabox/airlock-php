@@ -1,6 +1,11 @@
 version: '3'
 
 tasks:
+    test:
+        desc: Runs all tests
+        cmds:
+            - docker run --rm -v $(pwd):/app -v /var/run/docker.sock:/var/run/docker.sock airlock php vendor/bin/phpunit
+
     phpstan:
         desc: Runs PHPStan
         cmds:

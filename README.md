@@ -1,4 +1,5 @@
 # airlock-php
+![Tests](https://github.com/clegginabox/airlock-php/actions/workflows/tests.yaml/badge.svg)
 
 A distributed mutex with civilized waiting
 
