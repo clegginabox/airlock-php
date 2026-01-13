@@ -1,5 +1,8 @@
 # Airlock
 
+A distributed mutex with civilized waiting
+British-style queuing for your apps. 
+
 Library + optional Symfony bundle to coordinate access to limited resources using a queue, a seal, and an optional notifier.
 
 ## PHP
