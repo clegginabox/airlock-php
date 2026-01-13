@@ -8,9 +8,9 @@ use Redis;
 
 final readonly class RedisFifoQueue implements QueueInterface
 {
-    private const string DEFAULT_LIST_KEY = 'waiting_room:queue:list';
+    private const string DEFAULT_LIST_KEY = 'fifo:queue:list';
 
-    private const string DEFAULT_SET_KEY = 'waiting_room:queue:set';
+    private const string DEFAULT_SET_KEY = 'fifo:queue:set';
 
     public function __construct(
         private Redis $redis,

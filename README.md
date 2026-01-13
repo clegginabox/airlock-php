@@ -1,9 +1,8 @@
 # Airlock
 
 A distributed mutex with civilized waiting
-British-style queuing for your apps. 
 
-Library + optional Symfony bundle to coordinate access to limited resources using a queue, a seal, and an optional notifier.
+___British-style queuing for your code and infra___
 
 ## The Core Idea
 
@@ -94,6 +93,30 @@ $queue = new RedisLotteryQueue($redis);
 
 $airlock = new QueueAirlock($seal, $queue);
 ```
+
+## Priority Queue (Logged-in Users First)
+
+Behaviour:
+- Higher priority users jump ahead
+- FIFO within same priority tier
+- Guests wait, members skip the line
+
+```php
+use Clegginabox\Airlock\QueueAirlock;
+use Clegginabox\Airlock\Queue\RedisPriorityQueue;
+
+$seal = new SemaphoreSeal(... limit: 50);
+$queue = new RedisPriorityQueue($redis);
+
+$airlock = new QueueAirlock($seal, $queue);
+
+// Priority: higher = better. Logged-in users get priority 10, guests get 0.
+$priority = $user->isLoggedIn() ? 10 : 0;
+
+$result = $airlock->enter($userId, $priority);
+```
+
+Tiered priorities work too - VIPs at 100, paid members at 50, free users at 10, anonymous at 0.
 
 ## Singleton / Idempotency
 

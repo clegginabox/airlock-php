@@ -21,7 +21,7 @@ interface AirlockInterface
      * @param string $identifier Unique identifier for the user/session
      * @return EntryResult Contains access token if granted, or queue position if waiting
      */
-    public function enter(string $identifier): EntryResult;
+    public function enter(string $identifier, int $priority = 0): EntryResult;
 
     /**
      * Voluntarily leave the airlock before gaining access.

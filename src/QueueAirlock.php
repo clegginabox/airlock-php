@@ -19,12 +19,12 @@ final readonly class QueueAirlock implements AirlockInterface
     ) {
     }
 
-    public function enter(string $identifier): EntryResult
+    public function enter(string $identifier, int $priority = 0): EntryResult
     {
         // 1. SAFETY: ALWAYS join the queue first.
         // This ensures your position is secured before you check the door.
         // (If already in queue, this just returns current position)
-        $position = $this->queue->add($identifier);
+        $position = $this->queue->add($identifier, $priority);
 
         // 2. Are we at the front of the line? (Position 1)
         if ($position > 1) {

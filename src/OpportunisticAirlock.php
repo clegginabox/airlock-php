@@ -11,14 +11,14 @@ use RuntimeException;
  * A waiting room implementation that uses polling to determine admission.
  * The first user to acquire the semaphore is admitted.
  */
-class OpportunisticAirlock implements AirlockInterface
+final readonly class OpportunisticAirlock implements AirlockInterface
 {
     public function __construct(
-        private readonly SealInterface $seal,
+        private SealInterface $seal,
     ) {
     }
 
-    public function enter(string $identifier): EntryResult
+    public function enter(string $identifier, int $priority = 0): EntryResult
     {
         $token = $this->seal->tryAcquire();
         if ($token !== null) {

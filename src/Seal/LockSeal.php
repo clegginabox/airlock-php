@@ -60,7 +60,6 @@ final readonly class LockSeal implements SealInterface
             throw new LeaseExpiredException($token, 'Invalid token structure');
         }
 
-        // FIX 1: Use a distinct variable '$lock' so we don't overwrite '$key'
         $lock = $this->factory->createLockFromKey(
             $key,
             $ttlInSeconds ?? $this->ttlInSeconds
@@ -70,33 +69,27 @@ final readonly class LockSeal implements SealInterface
             $effectiveTtl = $ttlInSeconds ?? $this->ttlInSeconds;
             $lock->refresh($effectiveTtl);
 
-            // FIX 2: Serialize the KEY (value object), not the LOCK (service object)
             return serialize($key);
 
         } catch (LockExpiredException | LockConflictedException $e) {
-            // These are the two expected errors when a refresh fails
             throw new LeaseExpiredException($token, $e->getMessage());
         } catch (Throwable $e) {
-            // FIX 3: Catch any other weirdness (like serialization issues, though rare now)
             throw new LeaseExpiredException($token, 'Unexpected error: ' . $e->getMessage());
         }
     }
 
     public function isExpired(string $token): bool
     {
-        // FIX 4: Added missing 'return'
         return $this->resolveLock($token)?->isExpired() ?? true;
     }
 
     public function isAcquired(string $token): bool
     {
-        // FIX 5: Added missing 'return'
         return $this->resolveLock($token)?->isAcquired() ?? false;
     }
 
     public function getRemainingLifetime(string $token): ?float
     {
-        // FIX 6: Added missing 'return'
         return $this->resolveLock($token)?->getRemainingLifetime();
     }
 

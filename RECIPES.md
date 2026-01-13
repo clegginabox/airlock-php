@@ -92,6 +92,9 @@ $seal = new SemaphoreSeal(
 
 $airlock = new OpportunisticAirlock($seal);
 
+// Or use the factory
+$airlock = AirlockFactory::antiHug($redis, 'airlock:traffic_shield', $maxConcurrent, $sealTtlSeconds);
+
 // -----------------------
 // 4) Attempt admission
 // -----------------------
@@ -212,7 +215,7 @@ return new JsonResponse([
 use Clegginabox\Airlock\Seal\LockSeal;
 // ...
 
-$seal = new LockSeal(..., limit: 1);
+$seal = new LockSeal();
 $airlock = new QueueAirlock($seal, ...);
 
 try {
@@ -260,7 +263,7 @@ The Solution: Async HTTP + an Airlock semaphore that caps total in-flight calls 
 // Pseudocode shape (React/Amp style)
 // Use AirlockAsync + async HTTP client to cap concurrency.
 $seal = new SemaphoreSeal(... resource: 'outbound_http', limit: 50, ttlIn1Seconds: 20);
-$airlock = new AirlockAsync(new OpportunisticAirlock($seal));
+$airlock = new AsyncAirlock(new OpportunisticAirlock($seal));
 
 $jobs = array_map(fn($url) => function () use ($url, $airlock, $http) {
     return $airlock->withAdmittedAsync('http', function (string $token) use ($http, $url) {
@@ -345,3 +348,18 @@ Great for public waiting rooms where strict order isn’t required.
 The Problem: You push “you’re next” via Mercure, but they may be offline. You can’t hold capacity forever.
 
 The Solution: Reservation window (20s) + claim.
+
+```php
+// when a slot frees:
+$head = $queue->peek();
+$reservations->reserve($head, ttl: 20);
+$notifier->notify($head, "You’re up! Claim within 20s");
+
+// client calls /claim:
+if (!$reservations->isReservedFor($userId)) {
+    return new JsonResponse(['error' => 'missed'], 409);
+}
+
+$token = $seal->tryAcquire(); // now take real capacity
+return new JsonResponse(['token' => $token]);
+```
