@@ -1,12 +1,15 @@
 # airlock-php
 ![Tests](https://github.com/clegginabox/airlock-php/actions/workflows/tests.yaml/badge.svg)
 
-A distributed mutex with civilized waiting
+<img width="830" height="453" alt="airlock-php-red" src="https://github.com/user-attachments/assets/361fb9d2-00a4-4a11-b8cf-cde4fc951b9f" />
 
-___British-style queuing for your code and infra___
 
-> [!WARNING]
-> **Work in Progress** - This library is under active development and not yet production-ready. APIs may change, some implementations are stubs, and test coverage is incomplete. Use at your own risk, contributions welcome.
+<br/>A distributed mutex with civilized waiting
+
+___British-style queuing for your code and infrastructure___
+
+> [!CAUTION]
+> **Very Early Work in Progress** - This library is under active development and not yet production-ready. APIs will change, some implementations are stubs and test coverage is incomplete. Use at your own risk, contributions welcome.
 
 ## The Core Idea
 
