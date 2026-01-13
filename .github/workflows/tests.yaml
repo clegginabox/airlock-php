@@ -28,7 +28,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper
 
       - name: Run tests
         run: vendor/bin/phpunit
