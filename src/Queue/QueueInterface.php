@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Queue;
 
+/**
+ * Manages the waiting queue for users who cannot immediately enter the airlock.
+ *
+ * Users are added to the queue when capacity is full and removed when they
+ * either gain access or voluntarily leave.
+ */
 interface QueueInterface
 {
     /**

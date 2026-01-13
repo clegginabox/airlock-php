@@ -21,6 +21,9 @@
     ],
     "require": {
         "php": "^8.4",
+        "ext-redis": "*",
+        "symfony/console": "^8.0",
+        "symfony/lock": "^8.0",
         "symfony/semaphore": "^8.0"
     },
     "require-dev": {

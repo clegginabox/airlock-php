@@ -2,6 +2,80 @@
 
 Library + optional Symfony bundle to coordinate access to limited resources using a queue, a seal, and an optional notifier.
 
+## PHP
+
+```php
+
+use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
+use Clegginabox\Airlock\Seal\LockSeal;
+use Clegginabox\Airlock\Seal\SemaphoreSeal;
+use Clegginabox\Airlock\QueueAirlock;
+use Clegginabox\Airlock\Queue\RedisFifoQueue;
+use Redis;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Semaphore\SemaphoreFactory;
+
+$redis = new Redis();
+$redis->connect('172.17.0.2');
+
+// Semaphore allows more than 1 user to enter at a time
+$seal = new SemaphoreSeal(
+    factory: new SemaphoreFactory(
+        new \Symfony\Component\Semaphore\Store\RedisStore($redis)
+    ),
+    resource: 'my_airlock',
+    limit: 10,
+    weight: 1,
+    ttlInSeconds: 900,
+    autoRelease: false
+);
+
+$seal = new LockSeal(
+    factory: new LockFactory(
+        new \Symfony\Component\Lock\Store\RedisStore($redis)
+    ),
+    resource: 'my_airlock',
+    ttlInSeconds: 900,
+    autoRelease: false
+);
+
+// RedisFifoQueue (fair) or RedisLotteryQueue (random)
+$queue = new RedisFifoQueue($redis);
+
+// NullAirlockNotifier or MercureAirlockNotifier
+$notifier = new NullAirlockNotifier();
+
+// QueueAirlock or a free for all with PollingAirlock
+$airlock = new QueueAirlock(
+    seal: $seal,
+    queue: $queue,
+    notifier: $notifier,
+    topicPrefix: '/my_airlock'
+);
+
+// Try and enter the airlock
+$result = $airlock->enter($userId);
+
+if ($result->isAdmitted()) {
+    // Get the seal token
+    $token = $result->getToken();
+    
+    // ... Do your protected work ...
+    
+    // Heartbeat: Extend lease by another 5 minutes
+    $airlock->refresh($token, 300);
+    
+    // Done? Let the next person in!
+    $airlock->release($token);
+} else {
+    // Access Denied! Join the line
+    $queuePosition = $airlock->getPosition($userId);
+    
+    // Bored of waiting?
+    $airlock->leave($userId);
+}
+```
+
 ## Symfony bundle
 
 Register the bundle (if not using Flex):
