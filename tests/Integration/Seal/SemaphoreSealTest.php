@@ -6,6 +6,7 @@ namespace Clegginabox\Airlock\Tests\Integration\Seal;
 
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Seal\SemaphoreSeal;
+use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use Symfony\Component\Semaphore\SemaphoreFactory;
@@ -21,7 +22,7 @@ class SemaphoreSealTest extends TestCase
     {
         parent::setUp();
 
-        $this->redis = $this->createRedisConnection();
+        $this->redis = RedisFactory::create();
         $this->redis->flushAll();
 
         $store = new RedisStore($this->redis);
@@ -144,20 +145,5 @@ class SemaphoreSealTest extends TestCase
         sleep(1);
 
         $this->assertTrue($constraint->isExpired($oldToken));
-    }
-
-    private function createRedisConnection(): Redis
-    {
-        $url = $_ENV['REDIS_URL'] ?? throw new \RuntimeException('REDIS_URL not set in bootstrap');
-
-        $parsed = parse_url($url);
-
-        $redis = new Redis();
-        $redis->connect(
-            $parsed['host'] ?? '127.0.0.1',
-            $parsed['port'] ?? 6379,
-        );
-
-        return $redis;
     }
 }

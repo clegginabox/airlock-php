@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Tests\Integration\Queue;
 
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
+use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
 
@@ -17,7 +18,7 @@ class RedisFifoQueueTest extends TestCase
     {
         parent::setUp();
 
-        $this->redis = $this->createRedisConnection();
+        $this->redis = RedisFactory::create();
         $this->redis->flushAll();
 
         $this->queue = new RedisFifoQueue(
@@ -127,20 +128,5 @@ class RedisFifoQueueTest extends TestCase
         // THIS WILL FAIL: currently it returns -1
         $this->assertGreaterThan(0, $position, 'Queue returned invalid position -1, allowing user to skip line.');
         $this->assertEquals(1, $position, 'Queue did not heal the list state.');
-    }
-
-    private function createRedisConnection(): Redis
-    {
-        $url = $_ENV['REDIS_URL'] ?? throw new \RuntimeException('REDIS_URL not set in bootstrap');
-
-        $parsed = parse_url($url);
-
-        $redis = new Redis();
-        $redis->connect(
-            $parsed['host'] ?? '127.0.0.1',
-            $parsed['port'] ?? 6379,
-        );
-
-        return $redis;
     }
 }

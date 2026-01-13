@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Bridge\Laravel\Seal;
 
 /**
- * Wraps Illuminate\Cache\Lock
+ * Wraps Illuminate\Cache\RateLimiter
  */
-class LaravelAtomicLockSeal
-{
-}
+class LaravelRateLimiterSeal {}
