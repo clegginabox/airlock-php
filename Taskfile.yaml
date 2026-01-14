@@ -14,7 +14,7 @@ tasks:
     phpcs:
         desc: Runs PHPCS
         cmds:
-            - php vendor/bin/phpcs --standard=ruleset.xml -v -p -s --colors
+            - php vendor/bin/phpcs --standard=phpcs.xml -v -p -s --colors
 
     phpcbf:
         desc: Runs PHPCBF

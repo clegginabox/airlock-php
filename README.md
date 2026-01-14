@@ -11,7 +11,7 @@ British-style queuing for your code and infrastructure. First come, first served
 (Not to be confused with a message queue. Airlock doesn’t process messages — it just decides who’s coming in and who’s staying outside in the rain.)
 
 > [!CAUTION]
-> **Very Early Work in Progress** - This library is under active development and not yet production-ready. APIs will change, some implementations are stubs and test coverage is incomplete. Use at your own risk, contributions welcome.
+> **Very Early Work in Progress** - This library is under active development and not yet production-ready. APIs will change, many implementations are stubs and test coverage is incomplete. Use at your own risk, contributions welcome.
 
 ## The Core Idea
 
