@@ -25,10 +25,9 @@ Swap one piece, get a different system. Same interface, different behaviour. Dea
 
 ## Best-Effort / Anti-Hug Gate
 
-Behaviour:
-- No fairness guarantees
-- First request to hit free capacity wins
-- Fast, simple, resilient
+No fairness guarantees. First request to hit free capacity wins. If two requests arrive at the same time, one gets in and one doesn’t — and there’s no predicting which.
+
+Fast, simple, resilient. Perfect for protecting an endpoint from the hug of death when you don’t care who gets through, just how many.
 
 ```php
 use Clegginabox\Airlock\OpportunisticAirlock;
@@ -55,10 +54,9 @@ $result = $airlock->enter($clientId);
 
 ## Strict Fairness (FIFO)
 
-Behaviour:
-- Exact arrival order
-- Deterministic
-- Dead heads must be handled explicitly
+The proper British queue. Exact arrival order. Deterministic. No cutting, no exceptions.
+
+If someone in front of you wanders off to browse the shop, the whole queue waits. Dead heads must be handled explicitly — the system won’t assume they’ve left just because they’ve gone quiet.
 
 ```php
 use Clegginabox\Airlock\QueueAirlock;
@@ -73,10 +71,10 @@ $result = $airlock->enter($userId);
 ```
 
 ## Lottery (Fast, Unfair)
-Behaviour:
-- No ordering
-- High throughput
-- Self-healing under disconnects
+
+No ordering. High throughput. Self-healing under disconnects.
+
+The Ryanair boarding approach. Priority boarding means nowt when everyone’s already elbowing toward the gate. If someone disconnects, they simply drop out of the draw — no cleanup required.
 
 ```php
 use Clegginabox\Airlock\QueueAirlock;
@@ -89,10 +87,10 @@ $airlock = new QueueAirlock($seal, $queue);
 ```
 
 ## Aging Lottery (Fair-ish)
-Behaviour:
-- No ordering
-- High throughput
-- Self-healing under disconnects
+
+Same as the lottery, but the longer you wait, the better your odds. Eventually even the unluckiest punter gets through.
+
+The “I’ve been waiting ages, surely it’s my turn” system. Not strictly fair, but feels fairer — and sometimes that’s what matters.
 
 ```php
 use Clegginabox\Airlock\QueueAirlock;
@@ -106,10 +104,9 @@ $airlock = new QueueAirlock($seal, $queue);
 
 ## Priority Queue (Logged-in Users First)
 
-Behaviour:
-- Higher priority users jump ahead
-- FIFO within same priority tier
-- Guests wait, members skip the line
+Higher priority users jump ahead. FIFO within the same tier. Guests wait, members skip the line.
+
+The members’ entrance at the club. You’re still queuing, just… better.
 
 ```php
 use Clegginabox\Airlock\QueueAirlock;
@@ -130,10 +127,9 @@ Tiered priorities work too - VIPs at 100, paid members at 50, free users at 10, 
 
 ## Singleton / Idempotency
 
-Behaviour:
-- Exactly one at a time
-- No queue UI
-- Perfect for cron & user actions
+Exactly one at a time. No queue, no waiting room UI — just a simple “is someone already doing this?” check.
+
+Perfect for cron jobs that must never overlap, or user actions that shouldn’t fire twice if they double-click. The “we’re not having two of those” approach.
 
 ```php
 use Clegginabox\Airlock\OpportunisticAirlock;
