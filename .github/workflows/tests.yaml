@@ -25,10 +25,17 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: redis
-          coverage: none
+          coverage: ${{ matrix.php == '8.4' && 'pcov' || 'none' }}
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper
 
       - name: Run tests
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit ${{ matrix.php == '8.4' && '--coverage-clover clover.xml' || '' }}
+
+      - name: Upload coverage to Codacy
+        if: matrix.php == '8.4'
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: clover.xml
