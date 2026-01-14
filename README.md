@@ -4,21 +4,24 @@
 <img width="830" height="453" alt="airlock-php-red" src="https://github.com/user-attachments/assets/361fb9d2-00a4-4a11-b8cf-cde4fc951b9f" />
 
 
-<br/>A distributed mutex with civilized waiting
+<br/>*Distributed locking with manners*
 
-___British-style queuing for your code and infrastructure___
+British-style queuing for your code and infrastructure. First come, first served. As it should be.
 
 > [!CAUTION]
 > **Very Early Work in Progress** - This library is under active development and not yet production-ready. APIs will change, some implementations are stubs and test coverage is incomplete. Use at your own risk, contributions welcome.
 
 ## The Core Idea
 
-An Airlock is composed of:
-- a Seal (how capacity is enforced)
-- an Admission Strategy (who gets in next)
-- optional Notifier (how waiters are told)
+*Everything has a breaking point.* A database has connection limits. An API has rate limits. A checkout flow falls over if 50,000 people hit it at once.
+An airlock sits in front of that thing and makes everyone wait their turn nicely.
 
-Swap one piece, get a different system.
+Every Airlock is composed of:
+- A Seal — how capacity is enforced (the velvet rope)
+- An Admission Strategy — who gets in next (the queue itself)
+- An optional Notifier — how waiters are told it’s their turn (the “your table is ready” buzzer)
+
+Swap one piece, get a different system. Same interface, different behaviour. Dead simple.    
 
 ## Best-Effort / Anti-Hug Gate
 
