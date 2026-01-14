@@ -8,6 +8,8 @@
 
 British-style queuing for your code and infrastructure. First come, first served. As it should be.
 
+(Not to be confused with a message queue. Airlock doesn’t process messages — it just decides who’s coming in and who’s staying outside in the rain.)
+
 > [!CAUTION]
 > **Very Early Work in Progress** - This library is under active development and not yet production-ready. APIs will change, some implementations are stubs and test coverage is incomplete. Use at your own risk, contributions welcome.
 
@@ -142,6 +144,16 @@ $airlock->withAdmitted('job:invoice', function () {
     // guaranteed single-flight
 });
 ```
+
+## When Not to Use Airlock
+
+Airlock is not trying to be Cloudflare. If you’re selling Glastonbury tickets to the entire country at once, you need infrastructure with a budget bigger than this library’s test coverage.
+
+Airlock is for the stuff in between. The internal dashboard that falls over when someone sends a company-wide email. The checkout flow that can’t handle a flash sale. The webhook endpoint that your biggest customer keeps hammering.
+
+It’s probably not the right fit if:
+- **You just want to return 429s** — A rate limiter is simpler. Airlock assumes callers are willing to wait their turn.
+- **Waiting is not an option** — If requests must fail immediately, you want fail-fast guards, not admission control.
 
 ## Symfony bundle
 
