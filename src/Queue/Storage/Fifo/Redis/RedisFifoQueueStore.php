@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Queue\Storage\Fifo\Redis;
 
-use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorageInterface;
+use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorage;
 use Redis;
 
 /**
@@ -14,7 +14,7 @@ use Redis;
  * The SET tracks membership for fast contains() checks, while the LIST
  * maintains FIFO ordering.
  */
-final readonly class RedisFifoQueueStore implements FifoQueueStorageInterface
+final readonly class RedisFifoQueueStore implements FifoQueueStorage
 {
     private const string DEFAULT_LIST_KEY = 'fifo:queue:list';
     private const string DEFAULT_SET_KEY = 'fifo:queue:set';

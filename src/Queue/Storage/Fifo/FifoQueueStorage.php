@@ -10,7 +10,7 @@ namespace Clegginabox\Airlock\Queue\Storage\Fifo;
  * This interface abstracts the underlying storage mechanism (Redis, in-memory, etc.)
  * from the queue logic. Implementations must ensure atomicity where noted.
  */
-interface FifoQueueStorageInterface
+interface FifoQueueStorage
 {
     /**
      * Add identifier to the back of the queue if not already present.

@@ -111,10 +111,10 @@ The members’ entrance at the club. You’re still queuing, just… better.
 
 ```php
 use Clegginabox\Airlock\QueueAirlock;
-use Clegginabox\Airlock\Queue\RedisPriorityQueue;
+use Clegginabox\Airlock\Queue\PriorityQueue;
 
 $seal = new SemaphoreSeal(... limit: 50);
-$queue = new RedisPriorityQueue($redis);
+$queue = new PriorityQueue($redis);
 
 $airlock = new QueueAirlock($seal, $queue);
 

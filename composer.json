@@ -21,14 +21,11 @@
     ],
     "require": {
         "php": "^8.4",
-        "ext-redis": "*",
-        "ext-memcached": "*",
-        "ext-zookeeper": "*",
-        "symfony/console": "^8.0",
-        "symfony/lock": "^8.0",
-        "symfony/semaphore": "^8.0"
+        "ext-redis": "*"
     },
     "require-dev": {
+        "ext-memcached": "*",
+        "ext-zookeeper": "*",
         "amphp/sync": "^2.3",
         "illuminate/cache": "^12.47",
         "phpstan/phpstan": "^2.1",
@@ -41,11 +38,15 @@
         "squizlabs/php_codesniffer": "^4.0",
         "symfony/amazon-dynamo-db-lock": "^8.0",
         "symfony/framework-bundle": "^8.0",
+        "symfony/lock": "^8.0",
         "symfony/mercure": "^0.7.2",
         "symfony/rate-limiter": "^8.0",
+        "symfony/semaphore": "^8.0",
         "testcontainers/testcontainers": "^1.0"
     },
     "suggest": {
+        "symfony/lock": "Recommended Lock implementation",
+        "symfony/semaphore": "Recommended Semaphore implementation",
         "symfony/mercure": "Required to use the MercureAirlockNotifier."
     },
     "config": {

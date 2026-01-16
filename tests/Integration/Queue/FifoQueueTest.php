@@ -2,17 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Tests\Integration\Bridge\Symfony;
+namespace Clegginabox\Airlock\Tests\Integration\Queue;
 
+use Clegginabox\Airlock\Queue\FifoQueue;
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
+use Clegginabox\Airlock\Queue\Storage\Fifo\Redis\RedisFifoQueueStore;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
 
-class RedisFifoQueueTest extends TestCase
+class FifoQueueTest extends TestCase
 {
     private Redis $redis;
-    private RedisFifoQueue $queue;
+    private FifoQueue $queue;
 
     protected function setUp(): void
     {
@@ -21,11 +23,13 @@ class RedisFifoQueueTest extends TestCase
         $this->redis = RedisFactory::create();
         $this->redis->flushAll();
 
-        $this->queue = new RedisFifoQueue(
+        $storage = new RedisFifoQueueStore(
             $this->redis,
             'test:queue:list',
             'test:queue:set'
         );
+
+        $this->queue = new FifoQueue($storage);
     }
 
     public function testItPreservesFifoOrder(): void

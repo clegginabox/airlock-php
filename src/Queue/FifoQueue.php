@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Queue;
 
-use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorageInterface;
+use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorage;
 
 /**
  * FIFO queue implementation that delegates to a storage backend.
@@ -15,7 +15,7 @@ use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorageInterface;
 final readonly class FifoQueue implements QueueInterface
 {
     public function __construct(
-        private FifoQueueStorageInterface $storage,
+        private FifoQueueStorage $storage,
     ) {
     }
 

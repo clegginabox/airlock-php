@@ -13,6 +13,28 @@ use Symfony\Component\Semaphore\SemaphoreFactory;
 
 final class SymfonySemaphoreSealTest extends TestCase
 {
+    public function testAcquire(): void
+    {
+        $store = $this->createMock(PersistingStoreInterface::class);
+        $store->expects($this->once())
+            ->method('save')
+            ->with(
+                $this->isInstanceOf(Key::class),
+                1.0
+            );
+
+        $seal = new SymfonySemaphoreSeal(
+            new SemaphoreFactory($store),
+            'test_resource',
+            1,
+            1,
+            1.0
+        );
+
+        $token = $seal->tryAcquire();
+        $this->assertNotNull($token);
+    }
+
     public function testRefreshUsesClassConfiguredTtlWhenArgumentIsNull(): void
     {
         $configuredTtl = 50.0;
@@ -41,14 +63,12 @@ final class SymfonySemaphoreSealTest extends TestCase
     {
         $store = $this->createMock(PersistingStoreInterface::class);
 
-        $key = new Key('res', 1);
+        $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
+        $token = $seal->tryAcquire();
 
         $store->expects($this->once())
             ->method('delete')
-            ->willThrowException(new SemaphoreReleasingException($key, 'Connection failed'));
-
-        $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
-        $token = $seal->tryAcquire();
+            ->willThrowException(new SemaphoreReleasingException($token->getKey(), 'Connection failed'));
 
         $this->expectException(SemaphoreReleasingException::class);
         $seal->release($token);
