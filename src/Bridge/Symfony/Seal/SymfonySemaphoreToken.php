@@ -9,7 +9,9 @@ use Symfony\Component\Semaphore\Key;
 
 class SymfonySemaphoreToken implements PortableToken
 {
-    public function __construct(private Key $key) {}
+    public function __construct(private Key $key)
+    {
+    }
 
     public function getKey(): Key
     {

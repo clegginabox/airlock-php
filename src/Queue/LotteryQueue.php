@@ -19,7 +19,7 @@ class LotteryQueue implements QueueInterface
 
     public function remove(string $identifier): void
     {
-       $this->storage->remove($identifier);
+        $this->storage->remove($identifier);
     }
 
     public function peek(): ?string

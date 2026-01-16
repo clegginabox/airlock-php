@@ -19,7 +19,7 @@ tasks:
     phpcbf:
         desc: Runs PHPCBF
         cmds:
-            - php vendor/bin/phpcbf --standard=ruleset.xml
+            - php vendor/bin/phpcbf --standard=phpcs.xml
 
     rector:
         desc: Runs Rector

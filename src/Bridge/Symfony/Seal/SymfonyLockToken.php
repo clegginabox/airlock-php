@@ -9,7 +9,9 @@ use Symfony\Component\Lock\Key;
 
 class SymfonyLockToken implements PortableToken
 {
-    public function __construct(private Key $key) {}
+    public function __construct(private Key $key)
+    {
+    }
 
     public function getKey(): Key
     {

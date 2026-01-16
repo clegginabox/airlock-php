@@ -16,7 +16,8 @@ class AmpMutexToken implements SealToken
     public function __construct(
         private string $resource,
         private string $id,
-    ) {}
+    ) {
+    }
 
     public function getResource(): string
     {
