@@ -34,16 +34,13 @@ No fairness guarantees. First request to hit free capacity wins. If two requests
 Fast, simple, resilient. Perfect for protecting an endpoint from the hug of death when you don’t care who gets through, just how many.
 
 ```php
-use Clegginabox\Airlock\OpportunisticAirlock;
-use Clegginabox\Airlock\Seal\SemaphoreSeal;
-use Symfony\Component\Semaphore\SemaphoreFactory;
-use Symfony\Component\Semaphore\Store\RedisStore;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;use Clegginabox\Airlock\OpportunisticAirlock;use Symfony\Component\Semaphore\SemaphoreFactory;use Symfony\Component\Semaphore\Store\RedisStore;
 
 $redis = new Redis();
 $redis->connect('127.0.0.1');
 
 // Allow up to N concurrent “expensive” requests.
-$seal = new SemaphoreSeal(
+$seal = new SymfonySemaphoreSeal(
     factory: new SemaphoreFactory(new RedisStore($redis)),
     resource: 'site_capacity',
     limit: 20,
@@ -136,10 +133,9 @@ Exactly one at a time. No queue, no waiting room UI — just a simple “is some
 Perfect for cron jobs that must never overlap, or user actions that shouldn’t fire twice if they double-click. The “we’re not having two of those” approach.
 
 ```php
-use Clegginabox\Airlock\OpportunisticAirlock;
-use Clegginabox\Airlock\Seal\LockSeal;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;use Clegginabox\Airlock\OpportunisticAirlock;
 
-$seal = new LockSeal();
+$seal = new SymfonyLockSeal();
 $airlock = new OpportunisticAirlock($seal);
 
 $airlock->withAdmitted('job:invoice', function () {
@@ -157,85 +153,11 @@ It’s probably not the right fit if:
 - **You just want to return 429s** — A rate limiter is simpler. Airlock assumes callers are willing to wait their turn.
 - **Waiting is not an option** — If requests must fail immediately, you want fail-fast guards, not admission control.
 
-## Symfony bundle
+## Plans/Ideas/Roadmap
 
-Register the bundle (if not using Flex):
-
-```php
-// config/bundles.php
-return [
-    Clegginabox\Airlock\Bridge\Symfony\AirlockBundle::class => ['all' => true],
-];
-```
-
-Example config for a single airlock:
-
-```yaml
-# config/packages/airlock.yaml
-airlock:
-  service_id: waiting_room.workflow
-  alias: waiting_room.workflow
-  topic_prefix: /workflow_waiting_room
-  seal:
-    type: semaphore
-    semaphore:
-      factory: semaphore.workflow.factory
-      resource: workflow_waiting_room
-      limit: '%env(int:WORKFLOW_SEMAPHORE_LIMIT)%'
-      ttl_in_seconds: '%env(int:WORKFLOW_SEMAPHORE_TTL)%'
-  queue:
-    type: redis_fifo
-    redis_fifo:
-      redis: redis
-  notifier:
-    type: mercure
-    mercure:
-      hub: mercure.hub.default
-```
-
-When only one airlock is configured, the bundle exposes interface aliases:
-
-- `Clegginabox\Airlock\AirlockInterface`
-- `Clegginabox\Airlock\Seal\SealInterface`
-- `Clegginabox\Airlock\Queue\QueueInterface`
-- `Clegginabox\Airlock\Notifier\AirlockNotifierInterface`
-
-## Multiple airlocks
-
-Define named airlocks under `airlocks:`. Each airlock creates:
-
-- `airlock.<name>` (or `service_id` if set)
-- `airlock.<name>.seal`
-- `airlock.<name>.queue`
-- `airlock.<name>.notifier`
-
-```yaml
-# config/packages/airlock.yaml
-airlock:
-  airlocks:
-    workflow:
-      topic_prefix: /workflow_waiting_room
-      seal:
-        semaphore:
-          factory: semaphore.workflow.factory
-          resource: workflow_waiting_room
-          limit: '%env(int:WORKFLOW_SEMAPHORE_LIMIT)%'
-          ttl_in_seconds: '%env(int:WORKFLOW_SEMAPHORE_TTL)%'
-      queue:
-        type: redis_fifo
-        redis_fifo:
-          redis: redis
-      notifier:
-        type: mercure
-        mercure:
-          hub: mercure.hub.default
-
-    onboarding:
-      topic_prefix: /onboarding_waiting_room
-      queue:
-        type: redis_lottery
-      notifier:
-        type: null
-```
-
-When multiple airlocks are configured, interface aliases are not set to avoid ambiguity.
+- Symfony integration (Lock, Semaphore & RateLimiter)
+- Laravel integration (Lock & RateLimiter)
+- AMPHP integration (amphp/sync)
+- Extend Symfony Semaphore with more storage backends
+- Cloudflare Durable Objects integration
+- Composite Seal (combine RateLimiter + Lock/Semaphore)

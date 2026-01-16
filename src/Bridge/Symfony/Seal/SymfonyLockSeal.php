@@ -2,27 +2,30 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Seal;
+namespace Clegginabox\Airlock\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
-use Clegginabox\Airlock\Lock\LockFactoryInterface;
+use Clegginabox\Airlock\Seal\RefreshableSeal;
+use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\SealToken;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\LockExpiredException;
 use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
 use Throwable;
 
-class LockSeal implements Seal
+class SymfonyLockSeal implements ReleasableSeal, RefreshableSeal
 {
     public function __construct(
-        private LockFactoryInterface $factory,
+        private LockFactory $factory,
         private string $resource = 'waiting-room',
-        private float $ttlInSeconds = 300.0, // Better to enforce float than ?float
+        private float $ttlInSeconds = 300.0,
         private bool $autoRelease = false,
     ) {
     }
 
-    public function tryAcquire(): ?string
+    public function tryAcquire(): ?SealToken
     {
         $key = new Key($this->resource);
 
@@ -36,32 +39,27 @@ class LockSeal implements Seal
             return null;
         }
 
-        return serialize($key);
+        return new SymfonyLockToken($key);
     }
 
-    public function release(string $token): void
+    public function release(SealToken $token): void
     {
-        $key = unserialize($token, ['allowed_classes' => [Key::class]]);
-
-        if (!$key instanceof Key) {
+        if (!$token instanceof SymfonyLockToken) {
             return;
         }
 
-        // We don't care about the TTL during release
-        $lock = $this->factory->createLockFromKey($key);
+        $lock = $this->factory->createLockFromKey($token->getKey());
         $lock->release();
     }
 
-    public function refresh(string $token, ?float $ttlInSeconds = null): ?string
+    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
     {
-        $key = unserialize($token, ['allowed_classes' => [Key::class]]);
-
-        if (!$key instanceof Key) {
-            throw new LeaseExpiredException($token, 'Invalid token structure');
+        if (!$token instanceof SymfonyLockToken) {
+            throw new LeaseExpiredException((string) $token, 'Invalid token type');
         }
 
         $lock = $this->factory->createLockFromKey(
-            $key,
+            $token->getKey(),
             $ttlInSeconds ?? $this->ttlInSeconds
         );
 
@@ -69,39 +67,33 @@ class LockSeal implements Seal
             $effectiveTtl = $ttlInSeconds ?? $this->ttlInSeconds;
             $lock->refresh($effectiveTtl);
 
-            return serialize($key);
+            return $token;
         } catch (LockExpiredException | LockConflictedException $e) {
-            throw new LeaseExpiredException($token, $e->getMessage());
+            throw new LeaseExpiredException((string) $token, $e->getMessage());
         } catch (Throwable $e) {
-            throw new LeaseExpiredException($token, 'Unexpected error: ' . $e->getMessage());
+            throw new LeaseExpiredException((string) $token, 'Unexpected error: ' . $e->getMessage());
         }
     }
 
-    public function isExpired(string $token): bool
+    public function isExpired(SymfonyLockToken $token): bool
     {
         return $this->resolveLock($token)?->isExpired() ?? true;
     }
 
-    public function isAcquired(string $token): bool
+    public function isAcquired(SymfonyLockToken $token): bool
     {
         return $this->resolveLock($token)?->isAcquired() ?? false;
     }
 
-    public function getRemainingLifetime(string $token): ?float
+    public function getRemainingLifetime(SymfonyLockToken $token): ?float
     {
         return $this->resolveLock($token)?->getRemainingLifetime();
     }
 
-    private function resolveLock(string $token): ?LockInterface
+    private function resolveLock(SymfonyLockToken $token): ?LockInterface
     {
-        $key = unserialize($token, ['allowed_classes' => [Key::class]]);
-
-        if (!$key instanceof Key) {
-            return null;
-        }
-
         return $this->factory->createLockFromKey(
-            $key,
+            $token->getKey(),
             $this->ttlInSeconds,
             $this->autoRelease
         );

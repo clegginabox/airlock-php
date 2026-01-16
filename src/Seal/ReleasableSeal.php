@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Seal;
 
 /**
- * The acquired permit can be explicitly released.
+ * A seal whose acquired permits can be explicitly released before expiry.
  */
-interface ReleasableSeal
+interface ReleasableSeal extends Seal
 {
-    public function release(string $token): void;
+    /**
+     * Release a previously acquired slot.
+     */
+    public function release(SealToken $token): void;
 }

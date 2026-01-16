@@ -23,10 +23,7 @@
 
 declare(strict_types=1);
 
-use Clegginabox\Airlock\OpportunisticAirlock;
-use Clegginabox\Airlock\Seal\SemaphoreSeal;
-use Symfony\Component\Semaphore\SemaphoreFactory;
-use Symfony\Component\Semaphore\Store\RedisStore;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;use Clegginabox\Airlock\OpportunisticAirlock;use Symfony\Component\Semaphore\SemaphoreFactory;use Symfony\Component\Semaphore\Store\RedisStore;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -82,7 +79,7 @@ if (isset($_COOKIE[$passCookie]) && is_string($_COOKIE[$passCookie]) && $_COOKIE
 $redis = new Redis();
 $redis->connect($_ENV['REDIS_HOST'] ?? '127.0.0.1', (int)($_ENV['REDIS_PORT'] ?? 6379));
 
-$seal = new SemaphoreSeal(
+$seal = new SymfonySemaphoreSeal(
     factory: new SemaphoreFactory(new RedisStore($redis)),
     resource: 'airlock:traffic_shield',
     limit: $maxConcurrent,
@@ -212,10 +209,10 @@ return new JsonResponse([
 ```php
 // bin/console app:worker
 
-use Clegginabox\Airlock\Seal\LockSeal;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 // ...
 
-$seal = new LockSeal();
+$seal = new SymfonyLockSeal();
 $airlock = new QueueAirlock($seal, ...);
 
 try {

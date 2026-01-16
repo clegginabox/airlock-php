@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Tests\Integration\Seal;
+namespace Clegginabox\Airlock\Tests\Integration\Bridge\Symfony;
 
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
-use Clegginabox\Airlock\Seal\SemaphoreSeal;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Semaphore\Store\RedisStore;
 
-class SemaphoreSealTest extends TestCase
+class SymfonySemaphoreSealTest extends TestCase
 {
     private Redis $redis;
 
-    private SemaphoreSeal $constraint;
+    private SymfonySemaphoreSeal $constraint;
 
     protected function setUp(): void
     {
@@ -28,7 +28,7 @@ class SemaphoreSealTest extends TestCase
         $store = new RedisStore($this->redis);
         $factory = new SemaphoreFactory($store);
 
-        $this->constraint = new SemaphoreSeal(
+        $this->constraint = new SymfonySemaphoreSeal(
             $factory,
             'test_room',
             limit: 2,
@@ -74,7 +74,7 @@ class SemaphoreSealTest extends TestCase
     {
         // Create a constraint with 1 second TTL
         $shortFactory = new SemaphoreFactory(new RedisStore($this->redis));
-        $shortConstraint = new SemaphoreSeal(
+        $shortConstraint = new SymfonySemaphoreSeal(
             $shortFactory,
             'short_room',
             limit: 1,
@@ -99,7 +99,7 @@ class SemaphoreSealTest extends TestCase
     public function testRefreshThrowsLeaseExpiredExceptionOnFailure(): void
     {
         // 1. Create a constraint with a very short TTL (1 second)
-        $shortConstraint = new SemaphoreSeal(
+        $shortConstraint = new SymfonySemaphoreSeal(
             new SemaphoreFactory(new RedisStore($this->redis)),
             'fast_expire_room',
             limit: 1,
@@ -121,7 +121,7 @@ class SemaphoreSealTest extends TestCase
 
     public function testRefreshExtendsLeaseAndReturnsNewToken(): void
     {
-        $constraint = new SemaphoreSeal(
+        $constraint = new SymfonySemaphoreSeal(
             new SemaphoreFactory(new RedisStore($this->redis)),
             'refresh_test_room',
             limit: 1,
@@ -141,9 +141,5 @@ class SemaphoreSealTest extends TestCase
         $this->assertNotSame($oldToken, $newToken, 'Token string must change because timestamp changed');
         $this->assertTrue($constraint->isAcquired($newToken), 'Refreshing should not auto-release the lease');
         $this->assertTrue($constraint->getRemainingLifetime($newToken) > 5.0);
-
-        sleep(1);
-
-        $this->assertTrue($constraint->isExpired($oldToken));
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock;
 
+use Clegginabox\Airlock\Seal\SealToken;
+
 /**
  * Main entry point for managing access to a capacity-limited resource.
  *
@@ -37,18 +39,18 @@ interface AirlockInterface
      *
      * Call this when the user finishes using the resource or their session ends.
      *
-     * @param string $token The access token received from enter()
+     * @param SealToken $token The access token received from enter()
      */
-    public function release(string $token): void;
+    public function release(SealToken $token): void;
 
     /**
      * Extend the lease on an acquired slot.
      *
-     * @param string $token The current access token
+     * @param SealToken $token The current access token
      * @param float|null $ttlInSeconds New TTL, or null to use the default
-     * @return string|null New token if refreshed, null if the lease expired
+     * @return SealToken|null New token if refreshed, null if the lease expired
      */
-    public function refresh(string $token, ?float $ttlInSeconds = null): ?string;
+    public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken;
 
     /**
      * Get the current queue position for a waiting user.

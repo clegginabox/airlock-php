@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Factory;
 
 use Clegginabox\Airlock\AirlockInterface;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
 use Clegginabox\Airlock\OpportunisticAirlock;
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
 use Clegginabox\Airlock\Queue\RedisLotteryQueue;
 use Clegginabox\Airlock\QueueAirlock;
-use Clegginabox\Airlock\Seal\LockSeal;
-use Clegginabox\Airlock\Seal\SemaphoreSeal;
 use Redis;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\RedisStore as LockRedisStore;
@@ -28,7 +28,7 @@ final readonly class AirlockFactory
         ?AirlockNotifierInterface $notifier = null,
     ): AirlockInterface {
         return new QueueAirlock(
-            seal: new SemaphoreSeal(
+            seal: new SymfonySemaphoreSeal(
                 factory: new SemaphoreFactory(
                     new SemaphoreRedisStore($redis),
                 ),
@@ -47,7 +47,7 @@ final readonly class AirlockFactory
         ?AirlockNotifierInterface $notifier = null,
     ): AirlockInterface {
         return new QueueAirlock(
-            seal: new SemaphoreSeal(
+            seal: new SymfonySemaphoreSeal(
                 factory: new SemaphoreFactory(
                     new SemaphoreRedisStore($redis),
                 ),
@@ -62,7 +62,7 @@ final readonly class AirlockFactory
     public static function antiHug(Redis $redis, string $resource, int $limit, int $ttl): AirlockInterface
     {
         return new OpportunisticAirlock(
-            new SemaphoreSeal(
+            new SymfonySemaphoreSeal(
                 factory: new SemaphoreFactory(
                     new SemaphoreRedisStore($redis),
                 ),
@@ -76,7 +76,7 @@ final readonly class AirlockFactory
     public static function singleton(Redis $redis, string $resource, int $ttl): AirlockInterface
     {
         return new OpportunisticAirlock(
-            new LockSeal(
+            new SymfonyLockSeal(
                 factory: new LockFactory(
                     new LockRedisStore($redis),
                 ),

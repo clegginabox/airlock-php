@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Tests\Integration\Queue;
+namespace Clegginabox\Airlock\Tests\Integration\Bridge\Symfony;
 
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;

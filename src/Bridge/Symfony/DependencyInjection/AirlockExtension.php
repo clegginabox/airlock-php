@@ -6,6 +6,7 @@ namespace Clegginabox\Airlock\Bridge\Symfony\DependencyInjection;
 
 use Clegginabox\Airlock\AirlockInterface;
 use Clegginabox\Airlock\Bridge\Mercure\MercureAirlockNotifier;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
 use Clegginabox\Airlock\Queue\QueueInterface;
@@ -13,7 +14,6 @@ use Clegginabox\Airlock\Queue\RedisFifoQueue;
 use Clegginabox\Airlock\Queue\RedisLotteryQueue;
 use Clegginabox\Airlock\QueueAirlock;
 use Clegginabox\Airlock\Seal\SealInterface;
-use Clegginabox\Airlock\Seal\SemaphoreSeal;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -102,7 +102,7 @@ final class AirlockExtension extends Extension
     {
         $sealConfig = $config['seal']['semaphore'];
 
-        $definition = new Definition(SemaphoreSeal::class);
+        $definition = new Definition(SymfonySemaphoreSeal::class);
         $definition->setArguments([
             new Reference($sealConfig['factory']),
             $sealConfig['resource'],

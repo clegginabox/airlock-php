@@ -10,6 +10,6 @@ namespace Clegginabox\Airlock\Seal;
  *
  * Portable tokens can be stored in cookies, headers, or job payloads.
  */
-interface PortableToken
+interface PortableToken extends SealToken
 {
 }

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Tests\Unit\Seal;
+namespace Clegginabox\Airlock\Tests\Unit\Bridge\Symfony\Seal;
 
-use Clegginabox\Airlock\Seal\SemaphoreSeal;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Semaphore\Exception\SemaphoreReleasingException;
 use Symfony\Component\Semaphore\Key;
 use Symfony\Component\Semaphore\PersistingStoreInterface;
 use Symfony\Component\Semaphore\SemaphoreFactory;
 
-final class SemaphoreSealTest extends TestCase
+final class SymfonySemaphoreSealTest extends TestCase
 {
     public function testRefreshUsesClassConfiguredTtlWhenArgumentIsNull(): void
     {
@@ -25,12 +25,15 @@ final class SemaphoreSealTest extends TestCase
                 50.0
             );
 
-        $factory = new SemaphoreFactory($store);
-        $seal = new SemaphoreSeal($factory, 'test_resource', 1, 1, $configuredTtl);
+        $seal = new SymfonySemaphoreSeal(
+            new SemaphoreFactory($store),
+            'test_resource',
+            1,
+            1,
+            $configuredTtl
+        );
 
-        $key = new Key('test_resource', 1);
-        $token = serialize($key);
-
+        $token = $seal->tryAcquire();
         $seal->refresh($token);
     }
 
@@ -44,10 +47,8 @@ final class SemaphoreSealTest extends TestCase
             ->method('delete')
             ->willThrowException(new SemaphoreReleasingException($key, 'Connection failed'));
 
-        $factory = new SemaphoreFactory($store);
-        $seal = new SemaphoreSeal($factory, 'res', 1);
-
-        $token = serialize($key);
+        $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
+        $token = $seal->tryAcquire();
 
         $this->expectException(SemaphoreReleasingException::class);
         $seal->release($token);

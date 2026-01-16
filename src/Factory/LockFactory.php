@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Factory;
 
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Seal\LocalLockSeal;
-use Clegginabox\Airlock\Seal\LockSeal;
 use Clegginabox\Airlock\Seal\RemoteLockSeal;
 use Memcached;
 use Redis;
@@ -55,7 +55,7 @@ class LockFactory
      * @remote
      * @expiring
      */
-    public static function mongodb(string $dsn, array $options, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function mongodb(string $dsn, array $options, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new MongoDbStore($dsn, $options),
@@ -69,7 +69,7 @@ class LockFactory
      * @remote
      * @expiring
      */
-    public static function pdo(string $dsn, array $options, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function pdo(string $dsn, array $options, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new PdoStore($dsn, $options),
@@ -79,7 +79,7 @@ class LockFactory
         );
     }
 
-    public static function doctrineDbal(string $dsn, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function doctrineDbal(string $dsn, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new DoctrineDbalStore($dsn),
@@ -92,7 +92,7 @@ class LockFactory
     /**
      * @remote
      */
-    public static function postgresSql(string $dsn, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function postgresSql(string $dsn, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new PostgreSqlStore($dsn),
@@ -102,7 +102,7 @@ class LockFactory
         );
     }
 
-    public static function doctrineDbalPostgresSql(string $dsn, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function doctrineDbalPostgresSql(string $dsn, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new DoctrineDbalPostgreSqlStore($dsn),
@@ -129,7 +129,7 @@ class LockFactory
     /**
      * @remote
      */
-    public static function zookeeper(Zookeeper $zookeeper, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function zookeeper(Zookeeper $zookeeper, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new ZookeeperStore($zookeeper),
@@ -139,7 +139,7 @@ class LockFactory
         );
     }
 
-    public static function dynamoDb(string $dsn, string $resource, int $ttl, bool $autoRelease): LockSeal
+    public static function dynamoDb(string $dsn, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
         return self::lockSeal(
             store: new DynamoDbStore($dsn),
@@ -154,9 +154,9 @@ class LockFactory
         // @todo
     }
 
-    private static function lockSeal(PersistingStoreInterface $store, string $resource, int $ttl, bool $autoRelease): LockSeal
+    private static function lockSeal(PersistingStoreInterface $store, string $resource, int $ttl, bool $autoRelease): SymfonyLockSeal
     {
-        return new LockSeal(
+        return new SymfonyLockSeal(
             factory: new SymfonyLockFactory($store),
             resource: $resource,
             ttlInSeconds: $ttl,

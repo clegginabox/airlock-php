@@ -6,13 +6,15 @@ namespace Clegginabox\Airlock;
 
 use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use Clegginabox\Airlock\Queue\QueueInterface;
-use Clegginabox\Airlock\Seal\SealInterface;
+use Clegginabox\Airlock\Seal\RefreshableSeal;
+use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\SealToken;
 use RuntimeException;
 
 final readonly class QueueAirlock implements AirlockInterface
 {
     public function __construct(
-        private SealInterface $seal,
+        private ReleasableSeal&RefreshableSeal $seal,
         private QueueInterface $queue,
         private AirlockNotifierInterface $notifier,
         private string $topicPrefix = '/waiting-room',
@@ -52,7 +54,7 @@ final readonly class QueueAirlock implements AirlockInterface
         $this->queue->remove($identifier);
     }
 
-    public function release(string $token): void
+    public function release(SealToken $token): void
     {
         $this->seal->release($token);
 
@@ -65,7 +67,7 @@ final readonly class QueueAirlock implements AirlockInterface
         $this->notifier->notify($nextPassenger, $this->topicFor($nextPassenger));
     }
 
-    public function refresh(string $token, ?float $ttlInSeconds = null): ?string
+    public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken
     {
         return $this->seal->refresh($token, $ttlInSeconds);
     }
@@ -83,6 +85,7 @@ final readonly class QueueAirlock implements AirlockInterface
 
             if ($result->isAdmitted()) {
                 $token = $result->getToken();
+                assert($token !== null);
 
                 try {
                     return $fn($token);

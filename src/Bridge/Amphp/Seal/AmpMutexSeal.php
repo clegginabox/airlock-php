@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Bridge\Amphp\Seal;
 
+use Amp\Sync\Lock;
 use Amp\Sync\Mutex;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
-use Clegginabox\Airlock\Seal\SealInterface;
-use Symfony\Component\Lock\Lock;
+use Clegginabox\Airlock\Seal\RefreshableSeal;
+use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\SealToken;
 
 /**
  * Amp-backed Seal.
@@ -16,7 +18,7 @@ use Symfony\Component\Lock\Lock;
  * - Tokens are only valid in the *same PHP process* that acquired them.
  * - This is great for async workers (Amp/Revolt), not distributed web fleets.
  */
-final class AmpMutexSeal implements SealInterface
+final class AmpMutexSeal implements ReleasableSeal, RefreshableSeal
 {
     /** @var array<string, Lock> */
     private array $locks = [];
@@ -27,51 +29,59 @@ final class AmpMutexSeal implements SealInterface
     public function __construct(
         private readonly Mutex $mutex,
         private readonly string $resource = 'airlock',
-        private readonly ?float $ttlInSeconds = null, // optional "soft TTL" you enforce yourself
+        private readonly ?float $ttlInSeconds = null,
     ) {
     }
 
-    public function tryAcquire(): ?string
+    public function tryAcquire(): ?SealToken
     {
         // Amp Mutex::acquire() waits cooperatively (doesn't block the whole process),
-        // but it *does* wait. If you need a strict "try" you’d need cancellation/timeout.
-        //
-        // In a worker, that’s often acceptable: callers *want* to wait for the lock.
+        // but it *does* wait. If you need a strict "try" you'd need cancellation/timeout.
         $lock = $this->mutex->acquire();
 
-        $token = bin2hex(random_bytes(16));
-        $this->locks[$token] = $lock;
-        $this->acquiredAt[$token] = microtime(true);
+        $id = bin2hex(random_bytes(16));
+        $this->locks[$id] = $lock;
+        $this->acquiredAt[$id] = microtime(true);
 
-        return $token;
+        return new AmpMutexToken($this->resource, $id);
     }
 
-    public function release(string $token): void
+    public function release(SealToken $token): void
     {
-        $lock = $this->locks[$token] ?? null;
+        if (!$token instanceof AmpMutexToken) {
+            return;
+        }
+
+        $id = $token->getId();
+        $lock = $this->locks[$id] ?? null;
         if (!$lock) {
             return;
         }
 
-        unset($this->locks[$token], $this->acquiredAt[$token]);
+        unset($this->locks[$id], $this->acquiredAt[$id]);
         $lock->release();
     }
 
-    public function refresh(string $token, ?float $ttlInSeconds = null): string
+    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
     {
-        // Amp locks don’t have a lease in the Redis sense.
+        if (!$token instanceof AmpMutexToken) {
+            throw new LeaseExpiredException((string) $token, 'Invalid token type');
+        }
+
+        // Amp locks don't have a lease in the Redis sense.
         // If you want a lease, enforce a "soft TTL" in your own bookkeeping.
         if ($this->isExpired($token)) {
             $this->release($token);
-            throw new LeaseExpiredException($token, 'Lease expired (soft TTL)');
+            throw new LeaseExpiredException((string) $token, 'Lease expired (soft TTL)');
         }
 
         return $token;
     }
 
-    public function isExpired(string $token): bool
+    public function isExpired(AmpMutexToken $token): bool
     {
-        if (!isset($this->locks[$token])) {
+        $id = $token->getId();
+        if (!isset($this->locks[$id])) {
             return true;
         }
 
@@ -80,17 +90,18 @@ final class AmpMutexSeal implements SealInterface
             return false;
         }
 
-        return (microtime(true) - ($this->acquiredAt[$token] ?? 0.0)) >= $ttl;
+        return (microtime(true) - ($this->acquiredAt[$id] ?? 0.0)) >= $ttl;
     }
 
-    public function isAcquired(string $token): bool
+    public function isAcquired(AmpMutexToken $token): bool
     {
-        return isset($this->locks[$token]) && !$this->isExpired($token);
+        return isset($this->locks[$token->getId()]) && !$this->isExpired($token);
     }
 
-    public function getRemainingLifetime(string $token): ?float
+    public function getRemainingLifetime(AmpMutexToken $token): ?float
     {
-        if (!isset($this->locks[$token])) {
+        $id = $token->getId();
+        if (!isset($this->locks[$id])) {
             return null;
         }
 
@@ -98,7 +109,7 @@ final class AmpMutexSeal implements SealInterface
             return null;
         }
 
-        $elapsed = microtime(true) - ($this->acquiredAt[$token] ?? 0.0);
+        $elapsed = microtime(true) - ($this->acquiredAt[$id] ?? 0.0);
         return max(0.0, $this->ttlInSeconds - $elapsed);
     }
 

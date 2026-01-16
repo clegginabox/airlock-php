@@ -10,6 +10,6 @@ namespace Clegginabox\Airlock\Seal;
  * Implementations may wait until the seal becomes available
  * instead of failing immediately.
  */
-interface BlockingSeal
+interface BlockingSeal extends Seal
 {
 }
