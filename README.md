@@ -6,7 +6,7 @@
 <img width="830" height="453" alt="airlock-php-red" src="https://github.com/user-attachments/assets/361fb9d2-00a4-4a11-b8cf-cde4fc951b9f" />
 
 
-<br/>*Distributed locking with manners*
+# Distributed locking with manners
 
 British-style queuing for your code and infrastructure. First come, first served. As it should be.
 
