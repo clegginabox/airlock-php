@@ -58,13 +58,14 @@ class SymfonyLockSeal implements ReleasableSeal, RefreshableSeal
             throw new LeaseExpiredException((string) $token, 'Invalid token type');
         }
 
+        $effectiveTtl = $ttlInSeconds ?? $this->ttlInSeconds;
+
         $lock = $this->factory->createLockFromKey(
             $token->getKey(),
-            $ttlInSeconds ?? $this->ttlInSeconds
+            $effectiveTtl
         );
 
         try {
-            $effectiveTtl = $ttlInSeconds ?? $this->ttlInSeconds;
             $lock->refresh($effectiveTtl);
 
             return $token;
