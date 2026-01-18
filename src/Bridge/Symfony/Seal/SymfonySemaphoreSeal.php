@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
+use Clegginabox\Airlock\Exception\SealAcquiringException;
+use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\SealToken;
 use Symfony\Component\Semaphore\Exception\SemaphoreExpiredException;
+use Symfony\Component\Semaphore\Exception\SemaphoreReleasingException;
 use Symfony\Component\Semaphore\Key;
 use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Semaphore\SemaphoreInterface;
@@ -25,7 +28,7 @@ final readonly class SymfonySemaphoreSeal implements ReleasableSeal, Refreshable
     ) {
     }
 
-    public function tryAcquire(): ?SymfonySemaphoreToken
+    public function tryAcquire(): SymfonySemaphoreToken
     {
         $key = new Key($this->resource, $this->limit, $this->weight);
         $semaphore = $this->factory->createSemaphoreFromKey(
@@ -35,7 +38,7 @@ final readonly class SymfonySemaphoreSeal implements ReleasableSeal, Refreshable
         );
 
         if (!$semaphore->acquire()) {
-            return null;
+            throw new SealAcquiringException('Unable to acquire semaphore');
         }
 
         return new SymfonySemaphoreToken($key);
@@ -44,11 +47,22 @@ final readonly class SymfonySemaphoreSeal implements ReleasableSeal, Refreshable
     public function release(SealToken $token): void
     {
         if (!$token instanceof SymfonySemaphoreToken) {
-            return;
+            throw new SealReleasingException(
+                sprintf('Invalid token type: %s. Expected %s', get_class($token), SymfonySemaphoreToken::class)
+            );
         }
 
         $semaphore = $this->factory->createSemaphoreFromKey($token->getKey());
-        $semaphore->release();
+
+        try {
+            $semaphore->release();
+        } catch (SemaphoreReleasingException $e) {
+            throw new SealReleasingException(
+                sprintf('Unable to release semaphore: %s', $e->getMessage()),
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
     public function refresh(SealToken $token, ?float $ttlInSeconds = null): SymfonySemaphoreToken

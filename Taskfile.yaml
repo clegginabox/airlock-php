@@ -4,7 +4,7 @@ tasks:
     test:
         desc: Runs all tests
         cmds:
-            - docker run --rm -v $(pwd):/app -v /var/run/docker.sock:/var/run/docker.sock airlock php vendor/bin/phpunit
+            - docker run --rm -v $(pwd):/app -v /var/run/docker.sock:/var/run/docker.sock airlock php vendor/bin/phpunit --display-phpunit-notices --testdox
 
     phpstan:
         desc: Runs PHPStan
