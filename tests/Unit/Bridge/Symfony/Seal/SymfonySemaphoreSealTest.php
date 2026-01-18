@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Tests\Unit\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
+use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Exception\SealAcquiringException;
 use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\SealToken;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Semaphore\Exception\SemaphoreAcquiringException;
+use Symfony\Component\Semaphore\Exception\SemaphoreExpiredException;
 use Symfony\Component\Semaphore\Exception\SemaphoreReleasingException;
 use Symfony\Component\Semaphore\Key;
 use Symfony\Component\Semaphore\PersistingStoreInterface;
@@ -44,8 +46,9 @@ final class SymfonySemaphoreSealTest extends TestCase
         $store->expects($this->once())
             ->method('save')
             ->willThrowException(new SemaphoreAcquiringException(
-                new Key('test_resource', 1), 'Failed to acquire semaphore')
-            );
+                new Key('test_resource', 1),
+                'Failed to acquire semaphore'
+            ));
 
         $seal = new SymfonySemaphoreSeal(
             new SemaphoreFactory($store),
@@ -70,7 +73,7 @@ final class SymfonySemaphoreSealTest extends TestCase
             1.0
         );
 
-        $token = new class() implements SealToken {
+        $token = new class () implements SealToken {
             public function getResource(): string
             {
                 return 'resource';
@@ -140,6 +143,78 @@ final class SymfonySemaphoreSealTest extends TestCase
         );
 
         $token = $seal->tryAcquire();
+        $seal->refresh($token);
+    }
+
+    public function testRefreshUsesProvidedTtlWhenArgumentIsNotNull(): void
+    {
+        $configuredTtl = 50.0;
+        $overrideTtl = 100.0;
+
+        $store = $this->createMock(PersistingStoreInterface::class);
+        $store->expects($this->once())
+            ->method('putOffExpiration')
+            ->with(
+                $this->isInstanceOf(Key::class),
+                $overrideTtl
+            );
+
+        $seal = new SymfonySemaphoreSeal(
+            new SemaphoreFactory($store),
+            'test_resource',
+            1,
+            1,
+            $configuredTtl
+        );
+
+        $token = $seal->tryAcquire();
+        $seal->refresh($token, $overrideTtl);
+    }
+
+    public function testRefreshThrowsWithInvalidTokenType(): void
+    {
+        $store = $this->createStub(PersistingStoreInterface::class);
+        $seal = new SymfonySemaphoreSeal(
+            new SemaphoreFactory($store),
+            'test_resource',
+            1,
+            1,
+            1.0
+        );
+
+        $token = new class () implements SealToken {
+            public function getResource(): string
+            {
+                return 'resource';
+            }
+
+            public function getId(): string
+            {
+                return 'token_id';
+            }
+
+            public function __toString(): string
+            {
+                return 'resource';
+            }
+        };
+
+        $this->expectException(LeaseExpiredException::class);
+        $seal->refresh($token);
+    }
+
+    public function testRefreshThrowsWhenSemaphoreIsExpired(): void
+    {
+        $store = $this->createMock(PersistingStoreInterface::class);
+
+        $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
+        $token = $seal->tryAcquire();
+
+        $store->expects($this->once())
+            ->method('putOffExpiration')
+            ->willThrowException(new SemaphoreExpiredException($token->getKey(), 'Semaphore expired'));
+
+        $this->expectException(LeaseExpiredException::class);
         $seal->refresh($token);
     }
 }

@@ -13,6 +13,7 @@ use Redis;
 class LotteryQueueTest extends TestCase
 {
     private Redis $redis;
+
     private LotteryQueue $queue;
 
     protected function setUp(): void

@@ -57,7 +57,7 @@ class SymfonySemaphoreSealTest extends TestCase
     {
         // Fill capacity (2 slots)
         $token1 = $this->constraint->tryAcquire();
-        $token2 = $this->constraint->tryAcquire();
+        $this->constraint->tryAcquire();
 
         // Verify full
         $this->expectException(SealAcquiringException::class);

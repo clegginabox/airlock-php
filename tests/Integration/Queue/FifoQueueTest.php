@@ -14,6 +14,7 @@ use Redis;
 class FifoQueueTest extends TestCase
 {
     private Redis $redis;
+
     private FifoQueue $queue;
 
     protected function setUp(): void

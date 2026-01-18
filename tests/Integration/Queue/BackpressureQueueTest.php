@@ -36,7 +36,7 @@ class BackpressureQueueTest extends TestCase
         $healthCheck = new class implements HealthCheckerInterface {
             public function getScore(): float
             {
-               return 1;
+                return 1;
             }
         };
 
@@ -118,6 +118,7 @@ class BackpressureQueueTest extends TestCase
     {
         $healthCheck = new class implements HealthCheckerInterface {
             public float $score = 1.0;
+
             public function getScore(): float
             {
                 return $this->score;

@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile SlevomatCodingStandard.Variables.DisallowSuperGlobalVariable
 
 declare(strict_types=1);
 
