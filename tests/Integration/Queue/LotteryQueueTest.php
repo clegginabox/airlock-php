@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Tests\Integration\Queue;
 
 use Clegginabox\Airlock\Queue\LotteryQueue;
-use Clegginabox\Airlock\Queue\Storage\Lottery\Redis\RedisLotteryQueueStore;
+use Clegginabox\Airlock\Queue\Storage\Lottery\RedisLotteryQueueStore;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;

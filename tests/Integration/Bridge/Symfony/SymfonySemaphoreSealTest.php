@@ -6,7 +6,6 @@ namespace Clegginabox\Airlock\Tests\Integration\Bridge\Symfony;
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
-use Clegginabox\Airlock\Exception\SealAcquiringException;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
@@ -48,9 +47,9 @@ class SymfonySemaphoreSealTest extends TestCase
         $token2 = $this->constraint->tryAcquire();
         $this->assertNotNull($token2, 'Should acquire 2nd slot');
 
-        // 3. Try third slot -> Should FAIL (throw SealAcquiringException)
-        $this->expectException(SealAcquiringException::class);
-        $this->constraint->tryAcquire();
+        // 3. Try third slot -> Should FAIL (returns null)
+        $token3 = $this->constraint->tryAcquire();
+        $this->assertNull($token3, 'Should not acquire 3rd slot');
     }
 
     public function testReleaseOpensSlot(): void
@@ -60,8 +59,8 @@ class SymfonySemaphoreSealTest extends TestCase
         $this->constraint->tryAcquire();
 
         // Verify full
-        $this->expectException(SealAcquiringException::class);
-        $this->constraint->tryAcquire();
+        $token2 = $this->constraint->tryAcquire();
+        $this->assertNull($token2);
 
         // Release one
         $this->constraint->release($token1);

@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Queue\Storage\Fifo\Redis;
+namespace Clegginabox\Airlock\Queue\Storage\Fifo;
 
-use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorage;
 use Redis;
 
 /**

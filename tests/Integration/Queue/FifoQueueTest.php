@@ -6,7 +6,7 @@ namespace Clegginabox\Airlock\Tests\Integration\Queue;
 
 use Clegginabox\Airlock\Queue\FifoQueue;
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
-use Clegginabox\Airlock\Queue\Storage\Fifo\Redis\RedisFifoQueueStore;
+use Clegginabox\Airlock\Queue\Storage\Fifo\RedisFifoQueueStore;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;

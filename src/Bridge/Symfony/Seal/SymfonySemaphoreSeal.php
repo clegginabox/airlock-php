@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
-use Clegginabox\Airlock\Exception\SealAcquiringException;
 use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
@@ -28,7 +27,7 @@ final readonly class SymfonySemaphoreSeal implements ReleasableSeal, Refreshable
     ) {
     }
 
-    public function tryAcquire(): SymfonySemaphoreToken
+    public function tryAcquire(): ?SymfonySemaphoreToken
     {
         $key = new Key($this->resource, $this->limit, $this->weight);
         $semaphore = $this->factory->createSemaphoreFromKey(
@@ -38,7 +37,7 @@ final readonly class SymfonySemaphoreSeal implements ReleasableSeal, Refreshable
         );
 
         if (!$semaphore->acquire()) {
-            throw new SealAcquiringException('Unable to acquire semaphore');
+            return null;
         }
 
         return new SymfonySemaphoreToken($key);

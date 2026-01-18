@@ -6,7 +6,6 @@ namespace Clegginabox\Airlock\Tests\Unit\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
-use Clegginabox\Airlock\Exception\SealAcquiringException;
 use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\SealToken;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +39,7 @@ final class SymfonySemaphoreSealTest extends TestCase
         $seal->tryAcquire();
     }
 
-    public function testAcquireThrowsWhenSemaphoreCantBeAcquired(): void
+    public function testAcquireReturnsNullIfCantBeAcquired(): void
     {
         $store = $this->createMock(PersistingStoreInterface::class);
         $store->expects($this->once())
@@ -58,8 +57,8 @@ final class SymfonySemaphoreSealTest extends TestCase
             1.0
         );
 
-        $this->expectException(SealAcquiringException::class);
-        $seal->tryAcquire();
+        $token = $seal->tryAcquire();
+        $this->assertNull($token);
     }
 
     public function testReleaseThrowsWithInvalidTokenType(): void

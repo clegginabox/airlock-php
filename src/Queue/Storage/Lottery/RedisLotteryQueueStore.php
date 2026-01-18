@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Queue\Storage\Lottery\Redis;
+namespace Clegginabox\Airlock\Queue\Storage\Lottery;
 
-use Clegginabox\Airlock\Queue\Storage\Lottery\LotteryQueueStorage;
 use Redis;
 
 class RedisLotteryQueueStore implements LotteryQueueStorage
