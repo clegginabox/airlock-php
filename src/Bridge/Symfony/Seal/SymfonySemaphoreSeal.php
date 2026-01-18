@@ -48,7 +48,7 @@ final readonly class SymfonySemaphoreSeal implements ReleasableSeal, Refreshable
     {
         if (!$token instanceof SymfonySemaphoreToken) {
             throw new SealReleasingException(
-                sprintf('Invalid token type: %s. Expected %s', get_class($token), SymfonySemaphoreToken::class)
+                sprintf('Invalid token type: %s. Expected %s', $token::class, SymfonySemaphoreToken::class)
             );
         }
 
