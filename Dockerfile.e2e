@@ -1,0 +1,10 @@
+FROM node:25.3
+
+WORKDIR /app/e2e
+
+COPY package*.json /app/e2e/
+
+RUN npm ci
+RUN npx playwright install --with-deps chromium
+
+COPY . /app/e2e

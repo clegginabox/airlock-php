@@ -1,0 +1,39 @@
+:root {
+    --airlock-bg: #f7f7f7;
+    --airlock-border: #ddd;
+    --airlock-ok: #d4edda;
+    --airlock-warn: #fff3cd;
+    --airlock-error: #f8d7da;
+    --airlock-text: #222;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 640px;
+    margin: 3rem auto;
+    padding: 1.5rem;
+    color: var(--airlock-text);
+}
+
+.box {
+    border: 1px solid var(--airlock-border);
+    background: var(--airlock-bg);
+    padding: 1.25rem;
+    border-radius: 8px;
+}
+
+.status {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    border-radius: 6px;
+}
+
+.status.ok { background: var(--airlock-ok); }
+.status.wait { background: var(--airlock-warn); }
+.status.error { background: var(--airlock-error); }
+
+button {
+    padding: 0.6rem 1.1rem;
+    font-size: 1rem;
+    cursor: pointer;
+}

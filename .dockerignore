@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+
+# PHP Dependencies
+vendor/
+
+# PHP Testing & Quality Tools Cache
+.phpunit.cache/
+.phpcs-cache
+
+# E2E Testing
+e2e/
+
+# System Files
+.DS_Store
+
+# Documentation
+README.md
+RECIPES.md
+
+# Config
+compose.yaml

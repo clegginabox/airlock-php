@@ -7,6 +7,25 @@ on:
     branches: [main]
 
 jobs:
+  phpcs:
+    runs-on: ubuntu-latest
+    name: Code Style
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: redis
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
+
+      - name: Run phpcs
+        run: vendor/bin/phpcs --standard=phpcs.xml -v -p -s --colors
+
   test:
     runs-on: ubuntu-latest
 
@@ -39,3 +58,38 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: clover.xml
+
+  e2e:
+    runs-on: ubuntu-latest
+    name: E2E Tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start services
+        run: docker compose up -d --build php worker redis
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services..."
+          sleep 5
+          docker compose ps
+
+      - name: Run e2e tests
+        run: docker compose run --rm e2e
+
+      - name: Show worker logs on failure
+        if: failure()
+        run: docker compose logs worker
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/test-results/
+          retention-days: 7
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
