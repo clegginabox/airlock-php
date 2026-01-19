@@ -1,7 +1,7 @@
 # airlock-php - Distributed locking with manners
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/cdc12dbceac04dc8bbece4012222cd3d)](https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/cdc12dbceac04dc8bbece4012222cd3d)](https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+![Codacy Badge](https://app.codacy.com/project/badge/Grade/cdc12dbceac04dc8bbece4012222cd3d)(https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+![Codacy Badge](https://app.codacy.com/project/badge/Coverage/cdc12dbceac04dc8bbece4012222cd3d)(https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 ![PHPCS](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock/tests.yaml?label=phpcs)                                                                                                                                                                                                                                       
 ![PHPUnit](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock/tests.yaml?label=tests)                                                                                                                                                                                                                                       
 ![E2E](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock/tests.yaml?label=e2e)

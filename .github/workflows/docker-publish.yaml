@@ -1,0 +1,72 @@
+name: Publish Docker Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      images:
+        description: 'Which images to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - php
+          - e2e
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-php:
+    if: ${{ inputs.images == 'all' || inputs.images == 'php' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push PHP image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/php:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/php:${{ github.sha }}
+
+  build-e2e:
+    if: ${{ inputs.images == 'all' || inputs.images == 'e2e' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push E2E image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./e2e
+          file: ./e2e/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/e2e:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/e2e:${{ github.sha }}

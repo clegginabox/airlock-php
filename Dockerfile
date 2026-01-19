@@ -6,3 +6,5 @@ WORKDIR /app
 RUN install-php-extensions @composer redis memcached
 
 COPY . /app
+
+RUN composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
