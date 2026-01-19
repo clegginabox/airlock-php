@@ -51,7 +51,7 @@ services:
       - worker
       - redis
     command: >
-      sh -c "npm ci && npx playwright test"
+      sh -c "npm install && npx playwright test"
 
 volumes:
   caddy_data:
