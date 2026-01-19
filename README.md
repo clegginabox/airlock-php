@@ -1,8 +1,10 @@
 # airlock-php - Distributed locking with manners
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/cdc12dbceac04dc8bbece4012222cd3d)](https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-![Tests](https://github.com/clegginabox/airlock-php/actions/workflows/tests.yaml/badge.svg)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/cdc12dbceac04dc8bbece4012222cd3d)](https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+![PHPCS](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock/tests.yaml?label=phpcs)                                                                                                                                                                                                                                       
+![PHPUnit](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock/tests.yaml?label=tests)                                                                                                                                                                                                                                       
+![E2E](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock/tests.yaml?label=e2e)
 
 <img width="830" height="453" alt="airlock-php-red" src="https://github.com/user-attachments/assets/361fb9d2-00a4-4a11-b8cf-cde4fc951b9f" />
 

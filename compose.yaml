@@ -40,8 +40,8 @@ services:
 
   e2e:
     build:
-      context: .
-      dockerfile: Dockerfile.e2e
+      context: e2e
+      dockerfile: Dockerfile
     working_dir: /app/e2e
     volumes:
       - ./e2e:/app/e2e
