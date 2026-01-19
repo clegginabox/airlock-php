@@ -10,6 +10,7 @@
 
     <!-- Limit PHPCS to these directories -->
     <file>src</file>
+    <file>examples</file>
     <file>tests</file>
 
     <!-- Enforce exactly one blank line between methods -->

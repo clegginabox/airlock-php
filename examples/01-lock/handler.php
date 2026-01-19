@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Example 01: Double-click prevention / single-flight.
+ *
+ * The lock is acquired in start.php (HTTP layer) for instant feedback.
+ * This handler receives the serialized key, does the work, and releases the lock.
+ */
+
 declare(strict_types=1);
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
@@ -8,12 +15,6 @@ use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\RedisStore;
 
-/**
- * Example 01: Double-click prevention / single-flight.
- *
- * The lock is acquired in start.php (HTTP layer) for instant feedback.
- * This handler receives the serialized key, does the work, and releases the lock.
- */
 return static function (Redis $redis, array $job, callable $setStatus): void {
     $example  = '01-lock';
     $clientId = (string)($job['clientId'] ?? 'anonymous');
