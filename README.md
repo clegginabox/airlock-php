@@ -155,9 +155,10 @@ It’s probably not the right fit if:
 
 ## Plans/Ideas/Roadmap
 
+- Queues (Aging Lottery, Priority, MaxWait, RetryPenalty)
 - Symfony integration (Lock, Semaphore & RateLimiter)
 - Laravel integration (Lock & RateLimiter)
 - AMPHP integration (amphp/sync)
-- Extend Symfony Semaphore with more storage backends
+- Extend Symfony Semaphore with more storage backends (Remote, DynamoDB)
 - Cloudflare Durable Objects integration
 - Composite Seal (combine RateLimiter + Lock/Semaphore)
