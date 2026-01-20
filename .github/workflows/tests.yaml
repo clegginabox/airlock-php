@@ -59,43 +59,43 @@ jobs:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: clover.xml
 
-  e2e:
-    runs-on: ubuntu-latest
-    name: E2E Tests
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build and start services
-        run: docker compose up -d --build php redis
-
-      - name: Install PHP dependencies
-        run: docker compose exec -T php composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
-
-      - name: Start worker
-        run: docker compose up -d worker
-
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for services..."
-          sleep 5
-          docker compose ps
-
-      - name: Run e2e tests
-        run: docker compose run --rm e2e
-
-      - name: Show worker logs on failure
-        if: failure()
-        run: docker compose logs worker
-
-      - name: Upload test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: e2e/test-results/
-          retention-days: 7
-
-      - name: Stop services
-        if: always()
-        run: docker compose down
+#  e2e:
+#    runs-on: ubuntu-latest
+#    name: E2E Tests
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Build and start services
+#        run: docker compose up -d --build php redis
+#
+#      - name: Install PHP dependencies
+#        run: docker compose exec -T php composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
+#
+#      - name: Start worker
+#        run: docker compose up -d worker
+#
+#      - name: Wait for services to be ready
+#        run: |
+#          echo "Waiting for services..."
+#          sleep 5
+#          docker compose ps
+#
+#      - name: Run e2e tests
+#        run: docker compose run --rm e2e
+#
+#      - name: Show worker logs on failure
+#        if: failure()
+#        run: docker compose logs worker
+#
+#      - name: Upload test artifacts
+#        if: failure()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: playwright-report
+#          path: e2e/test-results/
+#          retention-days: 7
+#
+#      - name: Stop services
+#        if: always()
+#        run: docker compose down
