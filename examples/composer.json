@@ -1,0 +1,42 @@
+{
+    "name": "clegginabox/airlock-examples",
+    "type": "library",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Paul Clegg",
+            "email": "pclegg@gmail.com"
+        }
+    ],
+    "require": {
+        "ext-redis": "*",
+        "clegginabox/airlock": "dev-main",
+        "symfony/framework-bundle": "^8.0",
+        "symfony/runtime": "^8.0",
+        "symfony/lock": "^8.0",
+        "symfony/semaphore": "^8.0",
+        "symfony/console": "^8.0",
+        "symfony/dotenv": "^8.0",
+        "symfony/yaml": "^8.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "..",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": true
+        }
+    }
+}

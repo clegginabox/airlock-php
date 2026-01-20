@@ -15,7 +15,8 @@ class RedisLotteryQueueStore implements LotteryQueueStorage
     public function __construct(
         private readonly Redis $redis,
         private readonly string $setKey = self::SET_KEY,
-        private readonly string $candidateKey = self::CANDIDATE_KEY
+        private readonly string $candidateKey = self::CANDIDATE_KEY,
+        private readonly int $candidateTtlSeconds = 20,
     ) {
     }
 
@@ -57,8 +58,12 @@ class RedisLotteryQueueStore implements LotteryQueueStorage
     {
         // 1. Is there already a chosen candidate waiting?
         $candidate = $this->redis->get($this->candidateKey);
-        if ($candidate !== false && $this->redis->sIsMember($this->setKey, (string)$candidate)) {
-            return (string) $candidate;
+        if ($candidate !== false) {
+            if ($this->redis->sIsMember($this->setKey, (string) $candidate)) {
+                return (string) $candidate;
+            }
+
+            $this->redis->del($this->candidateKey);
         }
 
         // 2. No candidate (or they left). Pick a NEW winner.
@@ -68,10 +73,11 @@ class RedisLotteryQueueStore implements LotteryQueueStorage
             return null;
         }
 
-        // 3. Persist the winner so add() knows to let them in.
-        $this->redis->set($this->candidateKey, (string) $winner);
+        $this->redis->set($this->candidateKey, (string) $winner, ['nx', 'ex' => $this->candidateTtlSeconds]);
 
-        return (string) $winner;
+        $candidate = $this->redis->get($this->candidateKey);
+
+        return $candidate === false ? null : (string) $candidate;
     }
 
     public function getPosition(string $identifier): ?int

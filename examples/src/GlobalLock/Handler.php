@@ -1,22 +1,18 @@
 <?php
 
-/**
- * Example 01: Double-click prevention / single-flight.
- *
- * The lock is acquired in start.php (HTTP layer) for instant feedback.
- * This handler receives the serialized key, does the work, and releases the lock.
- */
-
 declare(strict_types=1);
+
+namespace App\GlobalLock;
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockToken;
+use Redis;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\RedisStore;
 
 return static function (Redis $redis, array $job, callable $setStatus): void {
-    $example  = '01-lock';
+    $example  = GlobalLock::NAME->value;
     $clientId = (string)($job['clientId'] ?? 'anonymous');
     $duration = (int)($job['durationSeconds'] ?? 5);
     $serializedKey = $job['serializedKey'] ?? null;
@@ -33,7 +29,7 @@ return static function (Redis $redis, array $job, callable $setStatus): void {
     // Reconstruct the seal and token from the serialized key
     $seal = new SymfonyLockSeal(
         factory: new LockFactory(new RedisStore($redis)),
-        resource: 'examples:01-lock:single-flight',
+        resource: GlobalLock::RESOURCE->value,
         ttlInSeconds: max(10, $duration + 10),
         autoRelease: false,
     );

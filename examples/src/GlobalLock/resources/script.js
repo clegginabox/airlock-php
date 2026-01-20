@@ -1,10 +1,8 @@
 const status = document.getElementById('status');
 const button = document.getElementById('go');
 
-const EXAMPLE = '01-lock';
-
 async function pollStatus(clientId) {
-    const url = `../status.php?example=${EXAMPLE}&clientId=${encodeURIComponent(clientId)}`;
+    const url = `./global-lock/status?clientId=${encodeURIComponent(clientId)}`;
 
     while (true) {
         const res = await fetch(url);
@@ -23,7 +21,7 @@ async function pollStatus(clientId) {
             return;
         }
 
-        await new Promise(r => setTimeout(r, 5000));
+        await new Promise(r => setTimeout(r, 1000));
     }
 }
 
@@ -32,7 +30,7 @@ button.onclick = async () => {
     status.className = 'status';
 
     try {
-        const res = await fetch('./start.php', { method: 'POST' });
+        const res = await fetch('./global-lock/start', { method: 'POST' });
         const data = await res.json();
 
         if (!res.ok || !data.ok) {

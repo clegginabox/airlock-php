@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use App\Kernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$env = $_SERVER['APP_ENV'] ?? 'dev';
+$debug = (bool) ($_SERVER['APP_DEBUG'] ?? true);
+
+$kernel = new Kernel($env, $debug);
+$application = new Application($kernel);
+$application->run();

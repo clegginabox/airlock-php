@@ -1,0 +1,11 @@
+# Symfony cache
+var/cache/
+
+# Composer dependencies
+vendor/
+composer.lock
+
+# IDE
+/.idea
+
+/config/reference.php
