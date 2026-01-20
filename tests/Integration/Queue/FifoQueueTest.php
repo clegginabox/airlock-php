@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Tests\Integration\Queue;
 
 use Clegginabox\Airlock\Queue\FifoQueue;
-use Clegginabox\Airlock\Queue\RedisFifoQueue;
 use Clegginabox\Airlock\Queue\Storage\Fifo\RedisFifoQueueStore;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
@@ -123,10 +122,8 @@ class FifoQueueTest extends TestCase
         // Ensure list is empty so we know their "real" position should be 1
         $this->redis->del($queueKey);
 
-        $queue = new RedisFifoQueue($this->redis, $queueKey, $setKey);
-
         // 2. Action: The ghost user tries to "add" themselves again
-        $position = $queue->add('ghost_user');
+        $position = $this->queue->add('ghost_user');
 
         // 3. Expectation: The queue should detect the corruption, re-add them to the list,
         // and return a valid position (1).

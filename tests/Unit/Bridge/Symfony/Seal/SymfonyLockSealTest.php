@@ -8,6 +8,7 @@ use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockToken;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Seal\SealToken;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\LockExpiredException;
@@ -95,6 +96,7 @@ class SymfonyLockSealTest extends TestCase
         $this->seal->release($token);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testReleaseWithInvalidTokenTypeDoesNothing(): void
     {
         $invalidToken = $this->createMock(SealToken::class);
@@ -104,6 +106,7 @@ class SymfonyLockSealTest extends TestCase
 
         $this->seal->release($invalidToken);
     }
+
 
     public function testRefreshWithDefaultTtl(): void
     {
@@ -143,6 +146,7 @@ class SymfonyLockSealTest extends TestCase
         $this->assertSame($token, $result);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testRefreshWithInvalidTokenTypeThrowsException(): void
     {
         $invalidToken = $this->createMock(SealToken::class);
@@ -271,6 +275,7 @@ class SymfonyLockSealTest extends TestCase
         $this->assertNull($this->seal->getRemainingLifetime($token));
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testToString(): void
     {
         $this->assertSame('lock-seal-test', (string) $this->seal);

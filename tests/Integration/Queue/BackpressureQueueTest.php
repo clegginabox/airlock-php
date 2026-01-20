@@ -6,7 +6,9 @@ namespace Clegginabox\Airlock\Tests\Integration\Queue;
 
 use Clegginabox\Airlock\HealthCheckerInterface;
 use Clegginabox\Airlock\Queue\BackpressureQueue;
+use Clegginabox\Airlock\Queue\FifoQueue;
 use Clegginabox\Airlock\Queue\RedisFifoQueue;
+use Clegginabox\Airlock\Queue\Storage\Fifo\RedisFifoQueueStore;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
@@ -15,7 +17,7 @@ class BackpressureQueueTest extends TestCase
 {
     private Redis $redis;
 
-    private RedisFifoQueue $fifoQueue;
+    private FifoQueue $fifoQueue;
 
     protected function setUp(): void
     {
@@ -24,11 +26,13 @@ class BackpressureQueueTest extends TestCase
         $this->redis = RedisFactory::create();
         $this->redis->flushAll();
 
-        $this->fifoQueue = new RedisFifoQueue(
+        $storage = new RedisFifoQueueStore(
             $this->redis,
             'test:queue:list',
             'test:queue:set'
         );
+
+        $this->fifoQueue = new FifoQueue($storage);
     }
 
     public function testItAllowsPeekWhenHealthIsGood(): void

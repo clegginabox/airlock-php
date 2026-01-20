@@ -93,6 +93,7 @@ class OpportunisticAirlockTest extends TestCase
         $this->airlock->refresh($this->mockSealToken);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function testLeave(): void
     {
         // no-op
