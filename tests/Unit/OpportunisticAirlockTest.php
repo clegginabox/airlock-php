@@ -93,6 +93,14 @@ class OpportunisticAirlockTest extends TestCase
         $this->airlock->refresh($this->mockSealToken);
     }
 
+    public function testLeave(): void
+    {
+        // no-op
+        $this->airlock->leave('identifier');
+
+        $this->assertTrue(true);
+    }
+
     #[AllowMockObjectsWithoutExpectations]
     public function testGetPositionReturnsNull(): void
     {
