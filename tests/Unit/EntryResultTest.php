@@ -31,7 +31,6 @@ class EntryResultTest extends TestCase
                 return 'token';
             }
         };
-
     }
 
     public function testAdmitted(): void
