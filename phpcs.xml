@@ -10,6 +10,8 @@
 
     <!-- Limit PHPCS to these directories -->
     <file>src</file>
+    <file>examples/bin</file>
+    <file>examples/public</file>
     <file>examples/src</file>
     <file>tests</file>
 
