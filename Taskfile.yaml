@@ -7,6 +7,11 @@ tasks:
             - docker run --rm -v $(pwd):/app -v /var/run/docker.sock:/var/run/docker.sock airlock php vendor/bin/phpunit --display-all-issues
             #- docker compose exec php vendor/bin/phpunit --display-phpunit-notices --testdox
 
+    coverage:text:
+        desc: Show code coverage summary in terminal
+        cmds:
+            - docker run --rm -v $(pwd):/app -v /var/run/docker.sock:/var/run/docker.sock airlock php vendor/bin/phpunit --coverage-text
+
     phpstan:
         desc: Runs PHPStan
         cmds:

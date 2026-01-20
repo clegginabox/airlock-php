@@ -73,37 +73,6 @@ final readonly class QueueAirlock implements AirlockInterface
         return $this->seal->refresh($token, $ttlInSeconds);
     }
 
-    public function withAdmitted(
-        string $identifier,
-        callable $fn,
-        ?float $timeoutSeconds = null,
-        float $pollIntervalSeconds = 0.5,
-    ): mixed {
-        $deadline = $timeoutSeconds !== null ? microtime(true) + $timeoutSeconds : null;
-
-        while (true) {
-            $result = $this->enter($identifier);
-
-            if ($result->isAdmitted()) {
-                $token = $result->getToken();
-                assert($token !== null);
-
-                try {
-                    return $fn($token);
-                } finally {
-                    $this->release($token);
-                }
-            }
-
-            if ($deadline !== null && microtime(true) >= $deadline) {
-                $this->leave($identifier);
-                throw new RuntimeException('Timed out waiting for admission');
-            }
-
-            usleep((int) ($pollIntervalSeconds * 1_000_000));
-        }
-    }
-
     public function getPosition(string $identifier): ?int
     {
         return $this->queue->getPosition($identifier);
