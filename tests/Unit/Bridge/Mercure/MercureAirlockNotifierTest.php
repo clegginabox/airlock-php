@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Tests\Unit\Bridge\Mercure;
 
 use Clegginabox\Airlock\Bridge\Mercure\MercureAirlockNotifier;
-use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
