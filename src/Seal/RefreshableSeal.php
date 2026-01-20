@@ -9,7 +9,7 @@ use Clegginabox\Airlock\Exception\LeaseExpiredException;
 /**
  * A seal whose acquired permits have a lease that can be extended.
  */
-interface RefreshableSeal extends Seal
+interface RefreshableSeal
 {
     /**
      * Extend the lease on an acquired slot.

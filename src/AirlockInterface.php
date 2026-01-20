@@ -48,6 +48,7 @@ interface AirlockInterface
      *
      * @param SealToken $token The current access token
      * @param float|null $ttlInSeconds New TTL, or null to use the default
+     *
      * @return SealToken|null New token if refreshed, null if the lease expired
      */
     public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken;
@@ -56,6 +57,7 @@ interface AirlockInterface
      * Get the current queue position for a waiting user.
      *
      * @param string $identifier Unique identifier for the user/session
+     *
      * @return int|null Position (1 = next in line), or null if not in queue
      */
     public function getPosition(string $identifier): ?int;
@@ -64,6 +66,7 @@ interface AirlockInterface
      * Get the notification topic for real-time updates.
      *
      * @param string $identifier Unique identifier for the user/session
+     *
      * @return string Topic URL/identifier for subscribing to updates
      */
     public function getTopic(string $identifier): string;

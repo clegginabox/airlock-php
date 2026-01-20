@@ -8,13 +8,14 @@ use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use Clegginabox\Airlock\Queue\QueueInterface;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
 use RuntimeException;
 
 final readonly class QueueAirlock implements AirlockInterface
 {
     public function __construct(
-        private ReleasableSeal&RefreshableSeal $seal,
+        private Seal&ReleasableSeal&RefreshableSeal $seal,
         private QueueInterface $queue,
         private AirlockNotifierInterface $notifier,
         private string $topicPrefix = '/waiting-room',

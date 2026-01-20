@@ -8,6 +8,7 @@ use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
 use Symfony\Component\Semaphore\Exception\SemaphoreExpiredException;
 use Symfony\Component\Semaphore\Exception\SemaphoreReleasingException;
@@ -15,7 +16,7 @@ use Symfony\Component\Semaphore\Key;
 use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Semaphore\SemaphoreInterface;
 
-final readonly class SymfonySemaphoreSeal implements ReleasableSeal, RefreshableSeal
+final readonly class SymfonySemaphoreSeal implements Seal, ReleasableSeal, RefreshableSeal
 {
     public function __construct(
         private SemaphoreFactory $factory,

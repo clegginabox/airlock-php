@@ -6,6 +6,7 @@ namespace Clegginabox\Airlock;
 
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
 use RuntimeException;
 
@@ -16,7 +17,7 @@ use RuntimeException;
 final readonly class OpportunisticAirlock implements AirlockInterface
 {
     public function __construct(
-        private ReleasableSeal&RefreshableSeal $seal,
+        private Seal&ReleasableSeal&RefreshableSeal $seal,
     ) {
     }
 

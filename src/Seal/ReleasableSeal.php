@@ -7,7 +7,7 @@ namespace Clegginabox\Airlock\Seal;
 /**
  * A seal whose acquired permits can be explicitly released before expiry.
  */
-interface ReleasableSeal extends Seal
+interface ReleasableSeal
 {
     /**
      * Release a previously acquired slot.

@@ -7,6 +7,7 @@ namespace Clegginabox\Airlock\Bridge\Symfony\Seal;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\LockExpiredException;
@@ -15,7 +16,7 @@ use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
 use Throwable;
 
-class SymfonyLockSeal implements ReleasableSeal, RefreshableSeal
+class SymfonyLockSeal implements Seal, ReleasableSeal, RefreshableSeal
 {
     public function __construct(
         private LockFactory $factory,

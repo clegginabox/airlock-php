@@ -9,6 +9,7 @@ use Amp\Sync\Mutex;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
+use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
 
 /**
@@ -18,7 +19,7 @@ use Clegginabox\Airlock\Seal\SealToken;
  * - Tokens are only valid in the *same PHP process* that acquired them.
  * - This is great for async workers (Amp/Revolt), not distributed web fleets.
  */
-final class AmpMutexSeal implements ReleasableSeal, RefreshableSeal
+final class AmpMutexSeal implements Seal, ReleasableSeal, RefreshableSeal
 {
     /** @var array<string, Lock> */
     private array $locks = [];
