@@ -8,7 +8,6 @@ use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
-use RuntimeException;
 
 /**
  * A waiting room implementation that uses polling to determine admission.
