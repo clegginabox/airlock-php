@@ -70,7 +70,7 @@ jobs:
         run: docker compose up -d --build php redis
 
       - name: Install PHP dependencies
-        run: docker compose exec -T php composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
+        run: docker compose exec -T php bash -c "cd examples/ && composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached"
 
       - name: Wait for services to be ready
         run: |
