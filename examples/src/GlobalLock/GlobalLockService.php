@@ -10,7 +10,9 @@ use Clegginabox\Airlock\Seal\SealToken;
 
 final readonly class GlobalLockService
 {
-    public function __construct(private AirlockFactory $airlockFactory) {}
+    public function __construct(private AirlockFactory $airlockFactory)
+    {
+    }
 
     public function start(string $clientId, int $durationSeconds = 10): EntryResult
     {
