@@ -24,10 +24,9 @@ test.describe.serial('01-global-lock - Double-Click Protection', () => {
 
     // Should show submitting, then running
     await expect(page.locator('#status')).toContainText('Processing');
-    await expect(page.locator('#status')).toHaveClass(/wait/);
 
     // Wait for completion (5s work + buffer)
-    await expect(page.locator('#status')).toContainText('Done', {timeout: 4000});
+    await expect(page.locator('#status')).toContainText('Done', {timeout: 5000});
     await expect(page.locator('#status')).toHaveClass(/ok/);
   });
 
@@ -55,7 +54,7 @@ test.describe.serial('01-global-lock - Double-Click Protection', () => {
       // First user starts action
       await page1.goto('/global-lock/');
       await page1.locator('#go').click();
-      await expect(page1.locator('#status')).toContainText('Submitting');
+      await expect(page1.locator('#status')).toContainText('Processing');
 
       // Second user tries to start - should be instantly blocked
       await page2.goto('/global-lock/');
@@ -68,7 +67,7 @@ test.describe.serial('01-global-lock - Double-Click Protection', () => {
 
       // Second user can now start
       await page2.locator('#go').click();
-      await expect(page2.locator('#status')).toContainText('Submitting');
+      await expect(page2.locator('#status')).toContainText('Processing');
     } finally {
       await context1.close();
       await context2.close();

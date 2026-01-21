@@ -1,32 +1,8 @@
 const status = document.getElementById('status');
 const button = document.getElementById('go');
 
-async function pollStatus(clientId) {
-    const url = `./global-lock/status?clientId=${encodeURIComponent(clientId)}`;
-
-    while (true) {
-        const res = await fetch(url);
-        const data = await res.json();
-
-        status.textContent = data.message || data.state;
-        status.className = 'status';
-
-        if (data.state === 'running') {
-            status.classList.add('wait');
-        } else if (data.state === 'done') {
-            status.classList.add('ok');
-            return;
-        } else if (data.state === 'blocked') {
-            status.classList.add('error');
-            return;
-        }
-
-        await new Promise(r => setTimeout(r, 1000));
-    }
-}
-
 button.onclick = async () => {
-    status.textContent = 'Submitting...';
+    status.textContent = 'Processing...';
     status.className = 'status';
 
     try {
@@ -36,10 +12,11 @@ button.onclick = async () => {
         if (!res.ok || !data.ok) {
             status.textContent = data.error || 'Failed to start';
             status.classList.add('error');
-            return;
+        } else {
+            status.textContent = 'Done!';
+            status.classList.remove('error');
+            status.classList.add('ok');
         }
-
-        await pollStatus(data.clientId);
     } catch (err) {
         status.textContent = 'Error: ' + err.message;
         status.classList.add('error');
