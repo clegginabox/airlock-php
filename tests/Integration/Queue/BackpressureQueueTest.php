@@ -7,7 +7,6 @@ namespace Clegginabox\Airlock\Tests\Integration\Queue;
 use Clegginabox\Airlock\HealthCheckerInterface;
 use Clegginabox\Airlock\Queue\BackpressureQueue;
 use Clegginabox\Airlock\Queue\FifoQueue;
-use Clegginabox\Airlock\Queue\RedisFifoQueue;
 use Clegginabox\Airlock\Queue\Storage\Fifo\RedisFifoQueueStore;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;

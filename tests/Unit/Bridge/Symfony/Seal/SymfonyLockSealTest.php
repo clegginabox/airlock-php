@@ -107,7 +107,6 @@ class SymfonyLockSealTest extends TestCase
         $this->seal->release($invalidToken);
     }
 
-
     public function testRefreshWithDefaultTtl(): void
     {
         $key = new Key('lock-seal-test');
