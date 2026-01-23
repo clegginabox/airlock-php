@@ -40,7 +40,7 @@ final readonly class OpportunisticAirlock implements AirlockInterface
         $this->seal->release($token);
     }
 
-    public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken
+    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
     {
         return $this->seal->refresh($token, $ttlInSeconds);
     }

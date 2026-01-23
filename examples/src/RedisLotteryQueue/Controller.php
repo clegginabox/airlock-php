@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\RedisLotteryQueue;
 
 use App\Infrastructure\ClientIdCookieSubscriber;
-use App\RedisLotteryQueue\Internal\RedisLotteryQueueSimulation;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,9 +46,6 @@ class Controller extends AbstractController
     #[Route('/redis-lottery-queue/start', methods: [Request::METHOD_POST])]
     public function start(Request $request, RedisLotteryQueueService $service): JsonResponse
     {
-        // Queue simulation only - pre-seed
-        $this->simulation->seedOnce();
-
         $clientId = (string) $request->attributes->get(ClientIdCookieSubscriber::ATTRIBUTE);
         $result = $service->start($clientId);
 

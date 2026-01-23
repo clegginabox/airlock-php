@@ -9,6 +9,7 @@ use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockToken;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Seal\SealToken;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\LockExpiredException;
@@ -18,9 +19,9 @@ use Symfony\Component\Lock\SharedLockInterface;
 
 class SymfonyLockSealTest extends TestCase
 {
-    private SharedLockInterface $mockLock;
+    private MockObject&SharedLockInterface $mockLock;
 
-    private LockFactory $mockFactory;
+    private MockObject&LockFactory $mockFactory;
 
     private SymfonyLockSeal $seal;
 

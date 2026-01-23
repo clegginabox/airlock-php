@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Tests\Unit\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreToken;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
 use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\SealToken;
@@ -99,6 +100,8 @@ final class SymfonySemaphoreSealTest extends TestCase
 
         $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
         $token = $seal->tryAcquire();
+        $this->assertNotNull($token);
+        /** @var SymfonySemaphoreToken $token */
 
         $store->expects($this->once())
             ->method('delete')
@@ -114,6 +117,8 @@ final class SymfonySemaphoreSealTest extends TestCase
 
         $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
         $token = $seal->tryAcquire();
+        $this->assertNotNull($token);
+        /** @var SymfonySemaphoreToken $token */
 
         $store->expects($this->once())
             ->method('delete');
@@ -142,6 +147,8 @@ final class SymfonySemaphoreSealTest extends TestCase
         );
 
         $token = $seal->tryAcquire();
+        $this->assertNotNull($token);
+        /** @var SymfonySemaphoreToken $token */
         $seal->refresh($token);
     }
 
@@ -167,6 +174,8 @@ final class SymfonySemaphoreSealTest extends TestCase
         );
 
         $token = $seal->tryAcquire();
+        $this->assertNotNull($token);
+        /** @var SymfonySemaphoreToken $token */
         $seal->refresh($token, $overrideTtl);
     }
 
@@ -208,6 +217,8 @@ final class SymfonySemaphoreSealTest extends TestCase
 
         $seal = new SymfonySemaphoreSeal(new SemaphoreFactory($store), 'res', 1);
         $token = $seal->tryAcquire();
+        $this->assertNotNull($token);
+        /** @var SymfonySemaphoreToken $token */
 
         $store->expects($this->once())
             ->method('putOffExpiration')

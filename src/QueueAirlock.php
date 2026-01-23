@@ -67,7 +67,7 @@ final readonly class QueueAirlock implements AirlockInterface
         $this->notifier->notify($nextPassenger, $this->topicFor($nextPassenger));
     }
 
-    public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken
+    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
     {
         return $this->seal->refresh($token, $ttlInSeconds);
     }

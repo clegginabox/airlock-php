@@ -26,6 +26,22 @@ jobs:
       - name: Run phpcs
         run: vendor/bin/phpcs --standard=phpcs.xml -v -p -s --colors
 
+  phpstan:
+    runs-on: ubuntu-latest
+    name: Code Style
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
+
+      - name: Run phpstan
+        run: vendor/bin/phpstan analyse --memory-limit=1024M
+
   test:
     runs-on: ubuntu-latest
 

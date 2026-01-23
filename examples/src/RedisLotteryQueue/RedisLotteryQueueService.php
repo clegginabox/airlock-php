@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\RedisLotteryQueue;
 
 use App\Factory\AirlockFactory;
-use App\RedisLotteryQueue\Internal\RedisLotteryQueueSimulation;
 use Clegginabox\Airlock\EntryResult;
 use Clegginabox\Airlock\QueueAirlock;
 
@@ -15,7 +14,6 @@ final class RedisLotteryQueueService
 
     public function __construct(
         private readonly AirlockFactory $airlockFactory,
-        private readonly RedisLotteryQueueSimulation $simulation,
     ) {
         $this->airlock = $this->airlockFactory->redisLotteryQueue();
     }
@@ -36,13 +34,8 @@ final class RedisLotteryQueueService
 
         if ($result->isAdmitted()) {
             $token = $result->getToken();
+            return $result;
 
-            /**
-             * Handle the user being admitted here
-             */
-
-            // Queue simulation only - handle success
-            $this->simulation->onSuccess($token, $clientId, $holdSeconds);
         }
 
         return $result;

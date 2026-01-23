@@ -9,8 +9,6 @@ use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
-use Symfony\Component\Lock\Exception\LockConflictedException;
-use Symfony\Component\Lock\Exception\LockExpiredException;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
@@ -70,8 +68,6 @@ class SymfonyLockSeal implements Seal, ReleasableSeal, RefreshableSeal
             $lock->refresh($effectiveTtl);
 
             return $token;
-        } catch (LockExpiredException | LockConflictedException $e) {
-            throw new LeaseExpiredException((string) $token, $e->getMessage());
         } catch (Throwable $e) {
             throw new LeaseExpiredException((string) $token, 'Unexpected error: ' . $e->getMessage());
         }
@@ -79,20 +75,20 @@ class SymfonyLockSeal implements Seal, ReleasableSeal, RefreshableSeal
 
     public function isExpired(SymfonyLockToken $token): bool
     {
-        return $this->resolveLock($token)?->isExpired() ?? true;
+        return $this->resolveLock($token)->isExpired();
     }
 
     public function isAcquired(SymfonyLockToken $token): bool
     {
-        return $this->resolveLock($token)?->isAcquired() ?? false;
+        return $this->resolveLock($token)->isAcquired();
     }
 
     public function getRemainingLifetime(SymfonyLockToken $token): ?float
     {
-        return $this->resolveLock($token)?->getRemainingLifetime();
+        return $this->resolveLock($token)->getRemainingLifetime();
     }
 
-    private function resolveLock(SymfonyLockToken $token): ?LockInterface
+    private function resolveLock(SymfonyLockToken $token): LockInterface
     {
         return $this->factory->createLockFromKey(
             $token->getKey(),

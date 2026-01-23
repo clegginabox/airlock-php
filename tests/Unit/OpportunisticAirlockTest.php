@@ -15,7 +15,9 @@ use PHPUnit\Framework\TestCase;
 
 class OpportunisticAirlockTest extends TestCase
 {
-    /** @var MockObject<ReleasableSeal&RefreshableSeal> */
+    /**
+     * @var MockObject&Seal&ReleasableSeal&RefreshableSeal
+     */
     private MockObject $mockSeal;
 
     private SealToken $mockSealToken;
@@ -24,11 +26,14 @@ class OpportunisticAirlockTest extends TestCase
 
     public function setUp(): void
     {
-        $this->mockSeal = $this->createMockForIntersectionOfInterfaces([
+        /** @var MockObject&Seal&ReleasableSeal&RefreshableSeal $mockSeal */
+        $mockSeal = $this->createMockForIntersectionOfInterfaces([
             Seal::class,
             ReleasableSeal::class,
             RefreshableSeal::class,
         ]);
+
+        $this->mockSeal = $mockSeal;
 
         $this->mockSealToken = new class implements SealToken {
             public function getResource(): string
@@ -47,7 +52,9 @@ class OpportunisticAirlockTest extends TestCase
             }
         };
 
-        $this->airlock = new OpportunisticAirlock($this->mockSeal);
+        /** @var Seal&ReleasableSeal&RefreshableSeal $seal */
+        $seal = $this->mockSeal;
+        $this->airlock = new OpportunisticAirlock($seal);
     }
 
     public function testEnterWhenAdmitted(): void
@@ -96,10 +103,8 @@ class OpportunisticAirlockTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function testLeave(): void
     {
-        // no-op
+        $this->expectNotToPerformAssertions();
         $this->airlock->leave('identifier');
-
-        $this->assertTrue(true);
     }
 
     #[AllowMockObjectsWithoutExpectations]

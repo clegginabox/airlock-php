@@ -17,7 +17,7 @@ class InMemoryFifoQueueStore implements FifoQueueStorage
             $this->queue[] = $identifier;
         }
 
-        return $this->getPosition($identifier);
+        return $this->getPosition($identifier) ?? -1;
     }
 
     public function remove(string $identifier): void

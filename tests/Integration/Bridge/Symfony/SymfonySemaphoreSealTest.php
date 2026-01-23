@@ -6,6 +6,7 @@ namespace Clegginabox\Airlock\Tests\Integration\Bridge\Symfony;
 
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
+use Clegginabox\Airlock\Seal\SealToken;
 use Clegginabox\Airlock\Tests\Factory\RedisFactory;
 use PHPUnit\Framework\TestCase;
 use Redis;
@@ -56,6 +57,7 @@ class SymfonySemaphoreSealTest extends TestCase
     {
         // Fill capacity (2 slots)
         $token1 = $this->constraint->tryAcquire();
+        $this->assertInstanceOf(SealToken::class, $token1);
         $this->constraint->tryAcquire();
 
         // Verify full
@@ -138,7 +140,6 @@ class SymfonySemaphoreSealTest extends TestCase
         // Refresh for another 10 seconds
         $newToken = $constraint->refresh($oldToken, 10);
 
-        $this->assertNotNull($newToken);
         $this->assertNotSame($oldToken, $newToken, 'Token string must change because timestamp changed');
         $this->assertTrue($constraint->isAcquired($newToken), 'Refreshing should not auto-release the lease');
         $this->assertTrue($constraint->getRemainingLifetime($newToken) > 5.0);

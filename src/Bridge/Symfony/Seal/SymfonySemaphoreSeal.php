@@ -89,20 +89,20 @@ final readonly class SymfonySemaphoreSeal implements Seal, ReleasableSeal, Refre
 
     public function isExpired(SymfonySemaphoreToken $token): bool
     {
-        return $this->resolveSemaphore($token)?->isExpired() ?? true;
+        return $this->resolveSemaphore($token)->isExpired();
     }
 
     public function isAcquired(SymfonySemaphoreToken $token): bool
     {
-        return $this->resolveSemaphore($token)?->isAcquired() ?? false;
+        return $this->resolveSemaphore($token)->isAcquired();
     }
 
     public function getRemainingLifetime(SymfonySemaphoreToken $token): ?float
     {
-        return $this->resolveSemaphore($token)?->getRemainingLifetime();
+        return $this->resolveSemaphore($token)->getRemainingLifetime();
     }
 
-    private function resolveSemaphore(SymfonySemaphoreToken $token): ?SemaphoreInterface
+    private function resolveSemaphore(SymfonySemaphoreToken $token): SemaphoreInterface
     {
         return $this->factory->createSemaphoreFromKey(
             $token->getKey(),

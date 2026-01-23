@@ -17,24 +17,29 @@ use PHPUnit\Framework\TestCase;
 
 class QueueAirlockTest extends TestCase
 {
-    /** @var MockObject<ReleasableSeal&RefreshableSeal> */
+    /**
+     * @var MockObject&Seal&ReleasableSeal&RefreshableSeal
+     */
     private MockObject $mockSeal;
 
     private SealToken $mockSealToken;
 
-    private LotteryQueue $mockQueue;
+    private MockObject&LotteryQueue $mockQueue;
 
-    private AirlockNotifierInterface $mockNotifier;
+    private MockObject&AirlockNotifierInterface $mockNotifier;
 
     private QueueAirlock $airlock;
 
     protected function setUp(): void
     {
-        $this->mockSeal = $this->createMockForIntersectionOfInterfaces([
+        /** @var MockObject&Seal&ReleasableSeal&RefreshableSeal $mockSeal */
+        $mockSeal = $this->createMockForIntersectionOfInterfaces([
             Seal::class,
             ReleasableSeal::class,
             RefreshableSeal::class,
         ]);
+
+        $this->mockSeal = $mockSeal;
 
         $this->mockSealToken = new class implements SealToken {
             public function getResource(): string
@@ -55,7 +60,11 @@ class QueueAirlockTest extends TestCase
 
         $this->mockNotifier = $this->createMock(AirlockNotifierInterface::class);
         $this->mockQueue = $this->createMock(LotteryQueue::class);
-        $this->airlock = new QueueAirlock($this->mockSeal, $this->mockQueue, $this->mockNotifier);
+
+        /** @var Seal&ReleasableSeal&RefreshableSeal $seal */
+        $seal = $this->mockSeal;
+
+        $this->airlock = new QueueAirlock($seal, $this->mockQueue, $this->mockNotifier);
     }
 
     #[AllowMockObjectsWithoutExpectations]
