@@ -33,9 +33,7 @@ final class RedisLotteryQueueService
         $result = $this->airlock->enter($clientId);
 
         if ($result->isAdmitted()) {
-            $token = $result->getToken();
             return $result;
-
         }
 
         return $result;
