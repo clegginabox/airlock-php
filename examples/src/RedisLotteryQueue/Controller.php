@@ -13,10 +13,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class Controller extends AbstractController
 {
-    public function __construct(private readonly RedisLotteryQueueSimulation $simulation)
-    {
-    }
-
     #[Route('/redis-lottery-queue', methods: [Request::METHOD_GET])]
     public function index(): Response
     {

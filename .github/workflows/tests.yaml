@@ -28,7 +28,7 @@ jobs:
 
   phpstan:
     runs-on: ubuntu-latest
-    name: Code Style
+    name: PHPStan
 
     steps:
       - uses: actions/checkout@v4
