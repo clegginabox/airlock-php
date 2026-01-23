@@ -5,6 +5,7 @@
 ![PHPCS](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=phpcs)
 ![PHPUnit](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=tests)
 ![E2E](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=e2e)
+![PHPStan Level 8](https://img.shields.io/badge/phpstan%20level-8%20of%209-green?style=flat-square&logo=php)
 
 <img width="830" height="453" alt="airlock-php-red" src="https://github.com/user-attachments/assets/361fb9d2-00a4-4a11-b8cf-cde4fc951b9f" />
 
