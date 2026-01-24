@@ -12,11 +12,13 @@ use Symfony\Component\Mercure\Hub;
 
 class SymfonyMercureHubFactoryTest extends TestCase
 {
+    private const string HUB_URL = 'https://example.com/hub';
+
     public function testCreateReturnsHub(): void
     {
-        $hub = SymfonyMercureHubFactory::create('https://example.com/hub', random_bytes(32));
+        $hub = SymfonyMercureHubFactory::create(self::HUB_URL, random_bytes(32));
 
-        $this->assertSame('https://example.com/hub', $hub->getPublicUrl());
+        $this->assertSame(self::HUB_URL, $hub->getPublicUrl());
     }
 
     public function testCreateForAirlockScopesJwtToTopic(): void
@@ -28,7 +30,7 @@ class SymfonyMercureHubFactoryTest extends TestCase
             ->willReturn('queue/user-123');
 
         $hub = SymfonyMercureHubFactory::createForAirlock(
-            'https://example.com/hub',
+            self::HUB_URL,
             random_bytes(32),
             $airlock,
             'user-123'
