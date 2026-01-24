@@ -60,26 +60,4 @@ class Controller extends AbstractController
             'clientId' => $clientId,
         ]);
     }
-
-    #[Route('/redis-lottery-queue/check', methods: [Request::METHOD_POST])]
-    public function check(Request $request, RedisLotteryQueueService $service): JsonResponse
-    {
-        $clientId = (string) $request->attributes->get(ClientIdCookieSubscriber::ATTRIBUTE);
-        $result = $service->check($clientId);
-
-        if ($result->isAdmitted()) {
-            return new JsonResponse([
-                'ok' => true,
-                'status' => 'admitted',
-                'clientId' => $clientId,
-            ]);
-        }
-
-        return new JsonResponse([
-            'ok' => true,
-            'status' => 'queued',
-            'position' => $result->getPosition(),
-            'clientId' => $clientId,
-        ]);
-    }
 }
