@@ -2,9 +2,6 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/cdc12dbceac04dc8bbece4012222cd3d)](https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/cdc12dbceac04dc8bbece4012222cd3d)](https://app.codacy.com/gh/clegginabox/airlock-php/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
-![PHPCS](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=phpcs)
-![PHPUnit](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=tests)
-![E2E](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=e2e)
 ![PHPStan Level 8](https://img.shields.io/badge/phpstan%20level-8%20of%209-green?style=flat-square&logo=php)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)

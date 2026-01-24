@@ -6,6 +6,8 @@ namespace App\Factory;
 
 use App\GlobalLock\GlobalLock;
 use App\RedisLotteryQueue\RedisLotteryQueue;
+use Clegginabox\Airlock\Bridge\Mercure\MercureAirlockNotifier;
+use Clegginabox\Airlock\Bridge\Symfony\Mercure\SymfonyMercureHubFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
@@ -80,5 +82,35 @@ class AirlockFactory
         );
 
         return new QueueAirlock($seal, $queue, new NullAirlockNotifier());
+    }
+
+    public function redisLotteryQueueWithMercure(
+        int $limit = 3,
+        int $ttl = 60,
+        int $claimWindow = 10,
+    ): QueueAirlock {
+        $seal = new SymfonySemaphoreSeal(
+            factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
+            resource: RedisLotteryQueue::RESOURCE->value,
+            limit: $limit,
+            weight: 1,
+            ttlInSeconds: $ttl,
+            autoRelease: false,
+        );
+
+        $queue = new LotteryQueue(
+            new RedisLotteryQueueStore(
+                redis: $this->redis,
+                setKey: RedisLotteryQueue::SET_KEY->value,
+                candidateKey: RedisLotteryQueue::CANDIDATE_KEY->value,
+                candidateTtlSeconds: $claimWindow,
+            ),
+        );
+
+        $hubUrl = getenv('MERCURE_HUB_URL') ?: 'http://localhost:3000/.well-known/mercure';
+        $jwtSecret = getenv('MERCURE_JWT_SECRET') ?: 'airlock-mercure-secret';
+        $hub = SymfonyMercureHubFactory::create($hubUrl, $jwtSecret);
+
+        return new QueueAirlock($seal, $queue, new MercureAirlockNotifier($hub));
     }
 }

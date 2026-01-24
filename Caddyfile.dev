@@ -1,5 +1,6 @@
 :80 {
   root * {$SERVER_ROOT}
   file_server
+  reverse_proxy /.well-known/mercure* mercure:80
   php_server
 }

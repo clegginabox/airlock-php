@@ -3,7 +3,14 @@ const button = document.getElementById('go');
 const resetButton = document.getElementById('reset');
 const positionDiv = document.getElementById('position');
 
-let polling = false;
+let mercureSource = null;
+
+const closeMercure = () => {
+    if (mercureSource) {
+        mercureSource.close();
+        mercureSource = null;
+    }
+};
 
 resetButton.onclick = async () => {
     resetButton.disabled = true;
@@ -17,6 +24,7 @@ resetButton.onclick = async () => {
         statusDiv.textContent = data.message || 'Reset complete';
         statusDiv.className = 'status ok';
         button.disabled = false;
+        closeMercure();
 
         setTimeout(() => {
             statusDiv.textContent = '';
@@ -30,38 +38,6 @@ resetButton.onclick = async () => {
         resetButton.disabled = false;
     }
 };
-
-async function checkQueue() {
-    try {
-        const res = await fetch('/redis-lottery-queue/check', { method: 'POST' });
-        const data = await res.json();
-
-        if (data.status === 'admitted') {
-            statusDiv.textContent = 'You got in! Redirecting...';
-            statusDiv.className = 'status ok';
-            polling = false;
-            setTimeout(() => {
-                window.location.href = '/redis-lottery-queue/success';
-            }, 500);
-            return;
-        }
-
-        // Still queued
-        statusDiv.textContent = 'Waiting in lottery queue...';
-        statusDiv.className = 'status wait';
-        if (positionDiv) {
-            positionDiv.textContent = `Queue size: ~${data.position} people`;
-        }
-
-        if (polling) {
-            setTimeout(checkQueue, 2000);
-        }
-    } catch (err) {
-        statusDiv.textContent = 'Error: ' + err.message;
-        statusDiv.className = 'status error';
-        polling = false;
-    }
-}
 
 button.onclick = async () => {
     button.disabled = true;
@@ -82,21 +58,53 @@ button.onclick = async () => {
         if (data.status === 'admitted') {
             statusDiv.textContent = 'You got in immediately! Redirecting...';
             statusDiv.className = 'status ok';
+            closeMercure();
             setTimeout(() => {
                 window.location.href = '/redis-lottery-queue/success';
             }, 500);
             return;
         }
 
-        // Queued - start polling
         statusDiv.textContent = 'Waiting in lottery queue...';
         statusDiv.className = 'status wait';
+
         if (positionDiv) {
             positionDiv.textContent = `Queue size: ~${data.position} people`;
         }
 
-        polling = true;
-        setTimeout(checkQueue, 2000);
+        if (data.topic && data.hubUrl) {
+            closeMercure();
+            const hub = new URL(data.hubUrl, window.location.origin);
+            hub.searchParams.append('topic', data.topic);
+            if (data.token) {
+                hub.searchParams.append('authorization', data.token);
+            }
+
+            mercureSource = new EventSource(hub.toString());
+            mercureSource.onmessage = (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.event !== 'your_turn') {
+                        return;
+                    }
+                } catch (_) {
+                    // Allow plain text payloads too.
+                }
+
+                statusDiv.textContent = 'Your turn! Redirecting...';
+                statusDiv.className = 'status ok';
+                closeMercure();
+
+                setTimeout(() => {
+                    window.location.href = '/redis-lottery-queue/success';
+                }, 500);
+            };
+
+            mercureSource.onerror = () => {
+                statusDiv.textContent = 'Waiting in lottery queue... (reconnecting)';
+                statusDiv.className = 'status wait';
+            };
+        }
     } catch (err) {
         statusDiv.textContent = 'Error: ' + err.message;
         statusDiv.className = 'status error';

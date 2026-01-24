@@ -23,7 +23,9 @@
         "symfony/semaphore": "^8.0",
         "symfony/console": "^8.0",
         "symfony/dotenv": "^8.0",
-        "symfony/yaml": "^8.0"
+        "symfony/yaml": "^8.0",
+        "symfony/mercure": "^0.7.2",
+        "lcobucci/jwt": "^5.6"
     },
     "repositories": [
         {

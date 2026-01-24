@@ -13,29 +13,30 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SERVER_ROOT: /app/examples/public
+      MERCURE_HUB_URL: http://mercure/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost/.well-known/mercure}
     env_file:
       - .env
     tty: true
     depends_on:
       - redis
+      - mercure
     ports:
       - "80:80" # HTTP
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    working_dir: /app
-    volumes:
-      - ./:/app
+  mercure:
+    image: dunglas/mercure
+    ports:
+      - "3000:80"
     environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-    env_file:
-      - .env
-    depends_on:
-      - redis
-    command: php examples/bin/console app:worker
+      SERVER_NAME: :80
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
+      MERCURE_PUBLISHER_JWT_ALG: HS256
+      MERCURE_SUBSCRIBER_JWT_ALG: HS256
+      MERCURE_ALLOW_ANONYMOUS: 1
+      MERCURE_CORS_ALLOWED_ORIGINS: "*"
 
   redis:
     image: redis:8.4.0
@@ -54,7 +55,6 @@ services:
     env_file:
       - .env
     depends_on:
-      - worker
       - redis
     command: >
       sh -c "npm install && npx playwright test"
