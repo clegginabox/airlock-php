@@ -4,7 +4,6 @@ WORKDIR /app/e2e
 
 COPY package*.json /app/e2e/
 
-RUN npm install
-RUN npx playwright install --with-deps chromium
+RUN npm install && npx playwright install --with-deps chromium
 
 COPY . /app/e2e

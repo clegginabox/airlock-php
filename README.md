@@ -7,6 +7,18 @@
 ![E2E](https://img.shields.io/github/actions/workflow/status/clegginabox/airlock-php/tests.yaml?label=e2e)
 ![PHPStan Level 8](https://img.shields.io/badge/phpstan%20level-8%20of%209-green?style=flat-square&logo=php)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=bugs)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=coverage)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=clegginabox_airlock-php&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=clegginabox_airlock-php)
+
 <img width="830" height="453" alt="airlock-php-red" src="https://github.com/user-attachments/assets/361fb9d2-00a4-4a11-b8cf-cde4fc951b9f" />
 
 British-style queuing for your code and infrastructure. First come, first served. As it should be.
