@@ -75,6 +75,13 @@ jobs:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: clover.xml
 
+      - name: SonarCloud Scan
+        if: matrix.php == '8.4'
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   e2e:
     runs-on: ubuntu-latest
     name: E2E Tests
