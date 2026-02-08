@@ -31,7 +31,7 @@
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
-        "phpunit/phpunit": "12.5.4",
+        "phpunit/phpunit": "^13.0",
         "react/async": "^4.3",
         "react/event-loop": "^1.6",
         "react/promise": "^3.3",
