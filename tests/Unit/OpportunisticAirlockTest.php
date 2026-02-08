@@ -82,24 +82,6 @@ class OpportunisticAirlockTest extends TestCase
         $this->assertEquals(-1, $entryResult->getPosition());
     }
 
-    public function testRelease(): void
-    {
-        $this->mockSeal->expects($this->once())
-            ->method('release')
-            ->with($this->mockSealToken);
-
-        $this->airlock->release($this->mockSealToken);
-    }
-
-    public function testRefresh(): void
-    {
-        $this->mockSeal->expects($this->once())
-            ->method('refresh')
-            ->with($this->mockSealToken);
-
-        $this->airlock->refresh($this->mockSealToken);
-    }
-
     #[AllowMockObjectsWithoutExpectations]
     public function testLeave(): void
     {

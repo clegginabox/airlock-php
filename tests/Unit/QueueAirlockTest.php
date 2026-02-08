@@ -36,7 +36,6 @@ class QueueAirlockTest extends TestCase
         $mockSeal = $this->createMockForIntersectionOfInterfaces([
             Seal::class,
             ReleasableSeal::class,
-            RefreshableSeal::class,
         ]);
 
         $this->mockSeal = $mockSeal;
@@ -61,7 +60,7 @@ class QueueAirlockTest extends TestCase
         $this->mockNotifier = $this->createMock(AirlockNotifierInterface::class);
         $this->mockQueue = $this->createMock(LotteryQueue::class);
 
-        /** @var Seal&ReleasableSeal&RefreshableSeal $seal */
+        /** @var Seal&ReleasableSeal $seal */
         $seal = $this->mockSeal;
 
         $this->airlock = new QueueAirlock($seal, $this->mockQueue, $this->mockNotifier);
@@ -163,16 +162,6 @@ class QueueAirlockTest extends TestCase
             ->with('identifier', '/waiting-room/identifier');
 
         $this->airlock->release($this->mockSealToken);
-    }
-
-    #[AllowMockObjectsWithoutExpectations]
-    public function testRefresh(): void
-    {
-        $this->mockSeal->expects($this->once())
-            ->method('refresh')
-            ->with($this->mockSealToken);
-
-        $this->airlock->refresh($this->mockSealToken);
     }
 
     #[AllowMockObjectsWithoutExpectations]

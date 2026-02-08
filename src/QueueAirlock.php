@@ -6,15 +6,14 @@ namespace Clegginabox\Airlock;
 
 use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use Clegginabox\Airlock\Queue\QueueInterface;
-use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
 
-final readonly class QueueAirlock implements AirlockInterface
+final readonly class QueueAirlock implements Airlock, ReleasingAirlock
 {
     public function __construct(
-        private Seal&ReleasableSeal&RefreshableSeal $seal,
+        private Seal&ReleasableSeal $seal,
         private QueueInterface $queue,
         private AirlockNotifierInterface $notifier,
         private string $topicPrefix = '/waiting-room',
@@ -29,7 +28,7 @@ final readonly class QueueAirlock implements AirlockInterface
         $position = $this->queue->add($identifier, $priority);
 
         // 2. Are we at the front of the line? (Position 1)
-        if ($position > 1) {
+        if ($position !== 1) {
             // No? Wait your turn.
             return EntryResult::queued($position, $this->topicFor($identifier));
         }
@@ -65,11 +64,6 @@ final readonly class QueueAirlock implements AirlockInterface
         }
 
         $this->notifier->notify($nextPassenger, $this->topicFor($nextPassenger));
-    }
-
-    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
-    {
-        return $this->seal->refresh($token, $ttlInSeconds);
     }
 
     public function getPosition(string $identifier): ?int

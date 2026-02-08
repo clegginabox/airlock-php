@@ -7,6 +7,7 @@ namespace Clegginabox\Airlock\Tests\Unit\Bridge\Symfony\Seal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockToken;
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
+use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\SealToken;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -98,13 +99,14 @@ class SymfonyLockSealTest extends TestCase
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function testReleaseWithInvalidTokenTypeDoesNothing(): void
+    public function testReleaseWithInvalidTokenThrows(): void
     {
         $invalidToken = $this->createMock(SealToken::class);
 
         $this->mockFactory->expects($this->never())
             ->method('createLockFromKey');
 
+        $this->expectException(SealReleasingException::class);
         $this->seal->release($invalidToken);
     }
 

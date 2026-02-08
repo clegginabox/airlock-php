@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock;
 
-use Clegginabox\Airlock\Seal\RefreshableSeal;
-use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\Seal;
-use Clegginabox\Airlock\Seal\SealToken;
 
 /**
  * A waiting room implementation that uses polling to determine admission.
  * The first user to acquire the semaphore is admitted.
  */
-final readonly class OpportunisticAirlock implements AirlockInterface
+final readonly class OpportunisticAirlock implements Airlock
 {
     public function __construct(
-        private Seal&ReleasableSeal&RefreshableSeal $seal,
+        private Seal $seal,
     ) {
     }
 
@@ -33,16 +30,6 @@ final readonly class OpportunisticAirlock implements AirlockInterface
     public function leave(string $identifier): void
     {
         // Nothing to do here
-    }
-
-    public function release(SealToken $token): void
-    {
-        $this->seal->release($token);
-    }
-
-    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
-    {
-        return $this->seal->refresh($token, $ttlInSeconds);
     }
 
     public function getPosition(string $identifier): ?int

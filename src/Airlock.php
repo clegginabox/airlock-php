@@ -12,7 +12,7 @@ use Clegginabox\Airlock\Seal\SealToken;
  * An airlock controls how many users can access a resource simultaneously,
  * queuing additional users until a slot becomes available.
  */
-interface AirlockInterface
+interface Airlock
 {
     /**
      * Attempt to enter the airlock.
@@ -33,25 +33,6 @@ interface AirlockInterface
      * @param string $identifier Unique identifier for the user/session
      */
     public function leave(string $identifier): void;
-
-    /**
-     * Release an acquired slot and notify the next queued user.
-     *
-     * Call this when the user finishes using the resource or their session ends.
-     *
-     * @param SealToken $token The access token received from enter()
-     */
-    public function release(SealToken $token): void;
-
-    /**
-     * Extend the lease on an acquired slot.
-     *
-     * @param SealToken $token The current access token
-     * @param float|null $ttlInSeconds New TTL, or null to use the default
-     *
-     * @return SealToken|null New token if refreshed, null if the lease expired
-     */
-    public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken;
 
     /**
      * Get the current queue position for a waiting user.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Tests\Unit\Bridge\Symfony\Mercure;
 
-use Clegginabox\Airlock\AirlockInterface;
+use Clegginabox\Airlock\Airlock;
 use Clegginabox\Airlock\Bridge\Symfony\Mercure\SymfonyMercureHubFactory;
 use JsonException;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +23,7 @@ class SymfonyMercureHubFactoryTest extends TestCase
 
     public function testCreateForAirlockScopesJwtToTopic(): void
     {
-        $airlock = $this->createMock(AirlockInterface::class);
+        $airlock = $this->createMock(Airlock::class);
         $airlock->expects($this->once())
             ->method('getTopic')
             ->with('user-123')

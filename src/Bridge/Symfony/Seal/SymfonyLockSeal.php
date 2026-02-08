@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Bridge\Symfony\Seal;
 
 use Clegginabox\Airlock\Exception\LeaseExpiredException;
+use Clegginabox\Airlock\Exception\SealReleasingException;
 use Clegginabox\Airlock\Seal\RefreshableSeal;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
+use Symfony\Component\Lock\Exception\LockReleasingException;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
@@ -44,11 +46,21 @@ class SymfonyLockSeal implements Seal, ReleasableSeal, RefreshableSeal
     public function release(SealToken $token): void
     {
         if (!$token instanceof SymfonyLockToken) {
-            return;
+            throw new SealReleasingException(
+                sprintf('Invalid token type: %s. Expected %s', $token::class, SymfonyLockToken::class)
+            );
         }
 
-        $lock = $this->factory->createLockFromKey($token->getKey());
-        $lock->release();
+        try {
+            $lock = $this->factory->createLockFromKey($token->getKey());
+            $lock->release();
+        } catch (LockReleasingException $e) {
+            throw new SealReleasingException(
+                sprintf('Unable to release lock: %s', $e->getMessage()),
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
     public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken

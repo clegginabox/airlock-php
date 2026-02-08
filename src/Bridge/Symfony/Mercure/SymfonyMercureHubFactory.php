@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Bridge\Symfony\Mercure;
 
-use Clegginabox\Airlock\AirlockInterface;
+use Clegginabox\Airlock\Airlock;
 use Symfony\Component\Mercure\Hub;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Jwt\FactoryTokenProvider;
@@ -29,7 +29,7 @@ class SymfonyMercureHubFactory
     public static function createForAirlock(
         string $hubUrl,
         string $jwtSecret,
-        AirlockInterface $airlock,
+        Airlock $airlock,
         string $identifier,
     ): HubInterface {
         $topic = $airlock->getTopic($identifier);
