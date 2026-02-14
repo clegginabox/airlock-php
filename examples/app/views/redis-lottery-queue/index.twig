@@ -1,0 +1,465 @@
+{% extends "layout/base.twig" %}
+
+{% block title %}Airlock: Lottery Queue{% endblock %}
+
+{% block styles %}
+    <style>
+        /* Slot animations */
+        @keyframes slot-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        @keyframes slot-glow {
+            0%, 100% { box-shadow: 0 0 12px 2px oklch(0.7 0.15 250 / 0.4); }
+            50% { box-shadow: 0 0 24px 6px oklch(0.7 0.15 250 / 0.7); }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes barrier-seal {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Slot circles */
+        .slot {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 2.5px dashed oklch(var(--bc) / 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: oklch(var(--bc) / 0.3);
+        }
+        .slot.occupied {
+            border: 2.5px solid oklch(var(--su));
+            color: oklch(var(--su));
+            background: oklch(var(--su) / 0.1);
+            animation: slot-pulse 2.5s ease-in-out infinite;
+        }
+        .slot.you {
+            border: 2.5px solid oklch(var(--a));
+            color: oklch(var(--a));
+            background: oklch(var(--a) / 0.12);
+            animation: slot-glow 2s ease-in-out infinite;
+        }
+
+        /* Barrier line */
+        .barrier {
+            height: 3px;
+            border-radius: 2px;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+        .barrier.sealed {
+            background: oklch(var(--er));
+            animation: barrier-seal 2s ease-in-out infinite;
+        }
+        .barrier.open {
+            background: oklch(var(--su));
+            opacity: 0.5;
+        }
+
+        /* Status alert entrance */
+        .status-alert {
+            animation: slide-up 0.35s ease-out;
+        }
+
+        /* Queue badge */
+        .queue-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 2px solid oklch(var(--bc) / 0.15);
+            color: oklch(var(--bc) / 0.5);
+            transition: all 0.3s ease;
+        }
+        .queue-badge.you {
+            border-color: oklch(var(--a));
+            color: oklch(var(--a));
+            background: oklch(var(--a) / 0.1);
+            box-shadow: 0 0 10px 2px oklch(var(--a) / 0.25);
+        }
+
+        /* Mobile slots */
+        @media (max-width: 640px) {
+            .slot {
+                width: 56px;
+                height: 56px;
+                font-size: 0.65rem;
+            }
+            .queue-badge {
+                width: 30px;
+                height: 30px;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+        <section class="overflow-hidden rounded-3xl border border-base-300 bg-base-200 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.6)] backdrop-blur">
+            <div class="relative p-6 sm:p-8 lg:p-10">
+                <div class="relative space-y-8">
+
+                    {# Header #}
+                    <div class="space-y-4">
+                        <div class="badge badge-primary">Redis</div>
+                        <div class="badge badge-secondary">Mercure</div>
+                        <div class="badge badge-accent">Symfony Semaphore</div>
+                        <h1 class="text-3xl font-black sm:text-4xl lg:text-5xl">
+                            Lottery Queue
+                        </h1>
+                        <p class="max-w-3xl text-base leading-relaxed text-base-content/70 sm:text-lg">
+                            Enter a contention scenario where access is randomised under load.
+                            Three users can stay inside at once. If capacity is full, you join the queue and wait for a random draw.
+                        </p>
+                    </div>
+
+                    {# Stat cards #}
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Inside Limit</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">1 User</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Draw Cycle</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">~5s</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Your Status</p>
+                            <p id="status-label" class="mt-2 text-2xl font-black text-base-content/30">Idle</p>
+                        </div>
+                    </div>
+
+
+
+                    {# Airlock chamber visual #}
+                    <div class="rounded-2xl border border-base-300 bg-base-100/50 p-6">
+                        <p class="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-base-content/40">Airlock Chamber</p>
+                        <div class="flex items-center justify-center gap-6 sm:gap-8">
+                            <div id="slot-0" class="slot">Empty</div>
+                        </div>
+                        <div id="barrier" class="barrier open mx-auto mt-5 w-3/4 sm:w-1/2"></div>
+                        <p id="barrier-label" class="mt-2 text-center text-xs font-medium text-base-content/30">Open</p>
+                    </div>
+
+                    {# Queue area (hidden by default) #}
+                    <div id="queue-area" class="hidden rounded-2xl border border-base-300 bg-base-100/50 p-6">
+                        <p class="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-base-content/40">Waiting Queue</p>
+                        <div id="queue-badges" class="flex flex-wrap items-center justify-center gap-3"></div>
+                    </div>
+
+                    {# Action area #}
+                    <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm sm:p-5">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <button
+                                id="go"
+                                type="button"
+                                class="btn btn-lg btn-primary rounded-full"
+                            >
+                                Join Queue
+                            </button>
+                            <button
+                                id="reset"
+                                type="button"
+                                class="btn btn-lg btn-ghost rounded-full"
+                            >
+                                Reset
+                            </button>
+                        </div>
+
+                        <div id="status" aria-live="polite"></div>
+                        <div id="position"></div>
+                    </div>
+
+                    {# Code snippet #}
+                    <div class="collapse collapse-arrow rounded-2xl border border-base-300 bg-base-100/50">
+                        <input type="checkbox" />
+                        <div class="collapse-title text-sm font-semibold uppercase tracking-[0.12em] text-base-content/50">
+                            How It Works
+                        </div>
+                        <div class="collapse-content">
+                            <pre class="!m-0 rounded-xl"><code class="language-php">
+$airlock = new QueueAirlock(
+    seal:     new SymfonySemaphoreSeal(new RedisStore($redis), limit: 1),
+    queue:    new RedisLotteryQueue($redis),
+    notifier: new MercureAirlockNotifier($hub),
+);
+
+$result = $airlock-&gt;enter($userId);
+
+if ($result-&gt;isAdmitted()) {
+    // You're in — serve the page
+} else {
+    // Queued — wait for Mercure notification
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    {# Hidden class hints so Tailwind CDN picks up dynamically-added alert classes #}
+    <div class="hidden">
+        <div class="alert alert-info"></div>
+        <div class="alert alert-success"></div>
+        <div class="alert alert-warning"></div>
+        <div class="alert alert-error"></div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    // Per-tab identity — sessionStorage is isolated per tab
+    if (!sessionStorage.getItem('clientId')) {
+        sessionStorage.setItem('clientId', crypto.randomUUID());
+    }
+    const CLIENT_ID = sessionStorage.getItem('clientId');
+
+    const CAPACITY = 1;
+    const REDIRECT_DELAY = 1500;
+
+    const goBtn = document.getElementById('go');
+    const resetBtn = document.getElementById('reset');
+    const statusDiv = document.getElementById('status');
+    const positionDiv = document.getElementById('position');
+    const statusLabel = document.getElementById('status-label');
+    const queueArea = document.getElementById('queue-area');
+    const queueBadges = document.getElementById('queue-badges');
+    const barrier = document.getElementById('barrier');
+    const barrierLabel = document.getElementById('barrier-label');
+    const slots = [
+        document.getElementById('slot-0'),
+    ];
+
+    let eventSource = null;
+    let occupied = 0;
+    let userSlot = -1;
+
+    // --- Visual helpers ---
+
+    function updateSlots(count, youIn) {
+        occupied = count;
+        slots.forEach((slot, i) => {
+            slot.className = 'slot';
+            if (i < count) {
+                if (youIn && i === (userSlot >= 0 ? userSlot : count - 1)) {
+                    slot.className = 'slot you';
+                    slot.textContent = 'You';
+                } else {
+                    slot.className = 'slot occupied';
+                    slot.textContent = 'In';
+                }
+            } else {
+                slot.textContent = 'Empty';
+            }
+        });
+    }
+
+    function updateBarrier(full) {
+        if (full) {
+            barrier.className = 'barrier sealed mx-auto mt-5 w-3/4 sm:w-1/2';
+            barrierLabel.textContent = 'Sealed';
+            barrierLabel.className = 'mt-2 text-center text-xs font-medium text-error';
+        } else {
+            barrier.className = 'barrier open mx-auto mt-5 w-3/4 sm:w-1/2';
+            barrierLabel.textContent = 'Open';
+            barrierLabel.className = 'mt-2 text-center text-xs font-medium text-base-content/30';
+        }
+    }
+
+    function showQueue(position, total) {
+        queueArea.classList.remove('hidden');
+        queueBadges.innerHTML = '';
+        for (let i = 1; i <= total; i++) {
+            const badge = document.createElement('div');
+            badge.className = 'queue-badge' + (i === position ? ' you' : '');
+            badge.textContent = i;
+            queueBadges.appendChild(badge);
+        }
+    }
+
+    function hideQueue() {
+        queueArea.classList.add('hidden');
+        queueBadges.innerHTML = '';
+    }
+
+    function setStatusLabel(text, color) {
+        statusLabel.textContent = text;
+        statusLabel.className = 'mt-2 text-2xl font-black ' + (color || 'text-base-content/30');
+    }
+
+    function setStatus(html) {
+        statusDiv.innerHTML = html;
+    }
+
+    function alertHtml(type, icon, text) {
+        return '<div class="alert alert-' + type + ' status-alert mt-5">' +
+            '<span>' + icon + '</span>' +
+            '<span>' + text + '</span>' +
+            '</div>';
+    }
+
+    // --- Icon SVGs ---
+    var spinnerIcon = '<svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+    var checkIcon = '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+    var warnIcon = '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M12 3l9.66 16.59A1 1 0 0120.66 21H3.34a1 1 0 01-.86-1.41L12 3z"/></svg>';
+    var errorIcon = '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+
+    // --- Actions ---
+
+    goBtn.addEventListener('click', async function () {
+        goBtn.disabled = true;
+        goBtn.classList.add('btn-disabled');
+        setStatus(alertHtml('info', spinnerIcon, 'Requesting entry...'));
+        setStatusLabel('Joining...', 'text-info');
+
+        try {
+            const res = await fetch('/redis-lottery-queue/start', {
+                method: 'POST',
+                headers: { 'X-Client-Id': CLIENT_ID },
+            });
+            const data = await res.json();
+
+            if (!data.ok) {
+                setStatus(alertHtml('error', errorIcon, data.error || 'Request failed'));
+                setStatusLabel('Error', 'text-error');
+                goBtn.disabled = false;
+                goBtn.classList.remove('btn-disabled');
+                return;
+            }
+
+            if (data.status === 'admitted') {
+                // Got in immediately
+                userSlot = data.position !== undefined ? data.position : occupied;
+                updateSlots(Math.min(occupied + 1, CAPACITY), true);
+                updateBarrier(occupied >= CAPACITY);
+                setStatus(alertHtml('success', checkIcon, 'You got in immediately! Redirecting...'));
+                setStatusLabel('Inside', 'text-success');
+                setTimeout(function () {
+                    window.location.href = '/redis-lottery-queue/success';
+                }, REDIRECT_DELAY);
+            } else if (data.status === 'queued') {
+                // Queued — wait for Mercure notification
+                var pos = data.position || '?';
+                updateSlots(CAPACITY, false);
+                updateBarrier(true);
+                showQueue(pos, Math.max(pos, 1));
+                setStatus(alertHtml('warning', spinnerIcon, 'Waiting in lottery queue...'));
+                setStatusLabel('Queued #' + pos, 'text-warning');
+                positionDiv.innerHTML = '<p class="mt-3 text-sm text-base-content/50">Position: <strong class="text-base-content">' + pos + '</strong></p>';
+
+                // Subscribe to Mercure for your_turn event
+                if (data.hubUrl && data.topic) {
+                    var url = new URL(data.hubUrl);
+                    url.searchParams.append('topic', data.topic);
+                    if (data.token) {
+                        // Set JWT as cookie — EventSource can't send Authorization headers
+                        document.cookie = 'mercureAuthorization=' + encodeURIComponent(data.token) + '; path=/.well-known/mercure; SameSite=Strict';
+                    }
+                    eventSource = new EventSource(url, { withCredentials: true });
+
+                    eventSource.onmessage = async function (event) {
+                        var msg = JSON.parse(event.data);
+                        if (msg.event === 'your_turn') {
+                            if (eventSource) {
+                                eventSource.close();
+                                eventSource = null;
+                            }
+                            setStatus(alertHtml('info', spinnerIcon, 'Your turn! Claiming slot...'));
+                            setStatusLabel('Claiming...', 'text-info');
+
+                            // Claim the slot by calling start again
+                            try {
+                                var claimRes = await fetch('/redis-lottery-queue/start', {
+                                    method: 'POST',
+                                    headers: { 'X-Client-Id': CLIENT_ID },
+                                });
+                                var claimData = await claimRes.json();
+
+                                if (claimData.ok && claimData.status === 'admitted') {
+                                    hideQueue();
+                                    userSlot = 0;
+                                    updateSlots(Math.min(CAPACITY, occupied), true);
+                                    setStatus(alertHtml('success', checkIcon, 'Your turn! Redirecting...'));
+                                    setStatusLabel('Inside', 'text-success');
+                                    positionDiv.innerHTML = '';
+                                    setTimeout(function () {
+                                        window.location.href = '/redis-lottery-queue/success';
+                                    }, REDIRECT_DELAY);
+                                } else {
+                                    // Rare race — someone else grabbed it, re-queue
+                                    setStatus(alertHtml('warning', spinnerIcon, 'Waiting in lottery queue...'));
+                                    setStatusLabel('Queued', 'text-warning');
+                                }
+                            } catch (err) {
+                                setStatus(alertHtml('error', errorIcon, 'Failed to claim slot'));
+                                setStatusLabel('Error', 'text-error');
+                            }
+                        }
+                    };
+
+                    eventSource.onerror = function () {
+                        // Silently reconnect — EventSource handles this
+                    };
+                }
+            }
+        } catch (err) {
+            setStatus(alertHtml('error', errorIcon, 'Network error: ' + err.message));
+            setStatusLabel('Error', 'text-error');
+            goBtn.disabled = false;
+            goBtn.classList.remove('btn-disabled');
+        }
+    });
+
+    resetBtn.addEventListener('click', async function () {
+        resetBtn.disabled = true;
+        resetBtn.classList.add('btn-disabled');
+
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+
+        try {
+            await fetch('/reset', { method: 'GET' });
+        } catch (e) {
+            // ignore
+        }
+
+        // Reset visuals
+        setStatus('');
+        positionDiv.innerHTML = '';
+        userSlot = -1;
+        occupied = 0;
+        updateSlots(0, false);
+        updateBarrier(false);
+        hideQueue();
+        setStatusLabel('Idle', '');
+        statusLabel.className = 'mt-2 text-2xl font-black text-base-content/30';
+
+        goBtn.disabled = false;
+        goBtn.classList.remove('btn-disabled');
+        resetBtn.disabled = false;
+        resetBtn.classList.remove('btn-disabled');
+    });
+})();
+</script>
+{% endblock %}

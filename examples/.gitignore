@@ -1,11 +1,11 @@
-# Symfony cache
-var/cache/
+/.*/
+!/.github
+/vendor
+/runtime/
+*/runtime/
 
-# Composer dependencies
-vendor/
-composer.lock
+/rr*
+/protoc-gen-php-grpc*
 
-# IDE
-/.idea
-
-/config/reference.php
+/.env
+/*.cache

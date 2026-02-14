@@ -10,15 +10,15 @@ test.describe.serial('01-global-lock - Double-Click Protection', () => {
   });
 
   test('should display initial state correctly', async ({page}) => {
-    await page.goto('/global-lock/');
+    await page.goto(`${BASE_URL}/global-lock/`);
 
-    await expect(page.locator('h1')).toHaveText('Airlock: Double-Click Protection');
+    await expect(page.locator('h1')).toHaveText('Double-Click Protection');
     await expect(page.locator('#go')).toBeEnabled();
     await expect(page.locator('#status')).toBeEmpty();
   });
 
   test('should process action and show done state', async ({page}) => {
-    await page.goto('/global-lock/');
+    await page.goto(`${BASE_URL}/global-lock/`);
 
     await page.locator('#go').click();
 
@@ -26,12 +26,12 @@ test.describe.serial('01-global-lock - Double-Click Protection', () => {
     await expect(page.locator('#status')).toContainText('Processing');
 
     // Wait for completion (5s work + buffer)
-    await expect(page.locator('#status')).toContainText('Done', {timeout: 5000});
+    await expect(page.locator('#status')).toContainText('Done', {timeout: 11000});
     await expect(page.locator('#status')).toHaveClass(/ok/);
   });
 
   test('should block double-click with instant rejection', async ({page}) => {
-    await page.goto('/global-lock/');
+    await page.goto(`${BASE_URL}/global-lock/`);
 
     // First click - starts processing
     await page.locator('#go').click();
@@ -52,12 +52,12 @@ test.describe.serial('01-global-lock - Double-Click Protection', () => {
 
     try {
       // First user starts action
-      await page1.goto('/global-lock/');
+      await page1.goto(`${BASE_URL}/global-lock/`);
       await page1.locator('#go').click();
       await expect(page1.locator('#status')).toContainText('Processing');
 
       // Second user tries to start - should be instantly blocked
-      await page2.goto('/global-lock/');
+      await page2.goto(`${BASE_URL}/global-lock/`);
       await page2.locator('#go').click();
       await expect(page2.locator('#status')).toContainText('Already processing');
       await expect(page2.locator('#status')).toHaveClass(/error/);

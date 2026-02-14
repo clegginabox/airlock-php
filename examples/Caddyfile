@@ -1,0 +1,4 @@
+:80 {
+	reverse_proxy /.well-known/mercure* mercure:80
+	reverse_proxy php:8080
+}

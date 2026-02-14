@@ -1,10 +1,18 @@
-FROM dunglas/frankenphp:php8.5.1
+FROM spiralscout/roadrunner as roadrunner
+# OR
+# FROM ghcr.io/roadrunner-server/roadrunner as roadrunner
+
+FROM php:8.5-cli
 
 WORKDIR /app
 
-# Install PHP extensions
-RUN install-php-extensions @composer redis memcached pcov
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+RUN install-php-extensions @composer redis memcached pcov sockets mbstring
 
 COPY . /app
 
-RUN composer install --no-interaction --prefer-dist --ignore-platform-req=ext-zookeeper --ignore-platform-req=ext-memcached
+RUN composer install --no-interaction --prefer-dist --ignore-platform-reqs
+
+COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
+
+CMD ["rr", "serve"]

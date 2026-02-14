@@ -1,0 +1,92 @@
+{% extends "layout/base.twig" %}
+
+{% block title %}Airlock — Examples{% endblock %}
+
+{% block body %}
+    <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+
+        {# Hero #}
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl font-black sm:text-5xl lg:text-6xl">
+                Airlock
+            </h1>
+            <p class="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-base-content/60">
+                Distributed locking and admission control for PHP.<br />
+                British-style queuing for your code and infrastructure
+            </p>
+        </div>
+
+        {# Example cards #}
+        <div class="grid gap-6 sm:grid-cols-2">
+
+            {# Global Lock #}
+            <a href="/global-lock" class="group rounded-3xl border border-base-300 bg-base-200 p-6 shadow-lg transition-all hover:border-primary/40 hover:shadow-primary/10 hover:shadow-xl sm:p-8">
+                <div class="mb-4 flex gap-2">
+                    <span class="badge badge-primary badge-sm">Redis</span>
+                    <span class="badge badge-accent badge-sm">Symfony Lock</span>
+                </div>
+                <div class="mb-3 flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-black">Double-Click Protection</h2>
+                </div>
+                <p class="text-sm leading-relaxed text-base-content/50">
+                    Global mutex lock backed by Redis. Once one user starts an action, all others are instantly rejected until it completes. Uses <code class="text-base-content/70">OpportunisticAirlock</code>.
+                </p>
+                <div class="mt-5 flex items-center gap-1 text-sm font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                    Try it
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </div>
+            </a>
+
+            {# Lottery Queue #}
+            <a href="/redis-lottery-queue" class="group rounded-3xl border border-base-300 bg-base-200 p-6 shadow-lg transition-all hover:border-secondary/40 hover:shadow-secondary/10 hover:shadow-xl sm:p-8">
+                <div class="mb-4 flex gap-2">
+                    <span class="badge badge-primary badge-sm">Redis</span>
+                    <span class="badge badge-secondary badge-sm">Mercure</span>
+                    <span class="badge badge-accent badge-sm">Symfony Semaphore</span>
+                </div>
+                <div class="mb-3 flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 text-secondary transition-colors group-hover:bg-secondary/20">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-black">Lottery Queue</h2>
+                </div>
+                <p class="text-sm leading-relaxed text-base-content/50">
+                    Capacity-limited admission with a waiting queue. When full, users queue and are drawn randomly via Mercure SSE notifications. Uses <code class="text-base-content/70">QueueAirlock</code>.
+                </p>
+                <div class="mt-5 flex items-center gap-1 text-sm font-semibold text-secondary opacity-0 transition-opacity group-hover:opacity-100">
+                    Try it
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </div>
+            </a>
+
+        </div>
+
+        {# Architecture summary #}
+        <div class="mt-12 rounded-3xl border border-base-300 bg-base-200 p-6 sm:p-8">
+            <h3 class="mb-4 text-sm font-semibold uppercase tracking-[0.15em] text-base-content/40">Architecture</h3>
+            <p class="mb-6 text-base-content/60">Every Airlock has three parts:</p>
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                    <p class="text-xs font-bold uppercase tracking-widest text-primary">Seal</p>
+                    <p class="mt-1 text-sm text-base-content/60">How capacity is enforced — lock, semaphore, or rate limiter</p>
+                </div>
+                <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                    <p class="text-xs font-bold uppercase tracking-widest text-secondary">Admission Strategy</p>
+                    <p class="mt-1 text-sm text-base-content/60">Who gets in next — FIFO, lottery, or backpressure</p>
+                </div>
+                <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                    <p class="text-xs font-bold uppercase tracking-widest text-accent">Notifier</p>
+                    <p class="mt-1 text-sm text-base-content/60">How waiters are told it's their turn — Mercure, WebSocket, polling</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+{% endblock %}

@@ -1,6 +1,11 @@
 version: '3'
 
 tasks:
+    bash:
+        desc: Opens a bash shell in the container
+        cmds:
+            - docker compose exec php bash
+
     test:
         desc: Runs all tests
         cmds:

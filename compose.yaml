@@ -1,34 +1,33 @@
 services:
+  gateway:
+    image: caddy:2-alpine
+    volumes:
+      - ./examples/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+      - mercure
+
   php:
     build:
       context: .
       dockerfile: Dockerfile
     working_dir: /app
-    volumes:
-      - ./:/app
-      - ./Caddyfile.dev:/etc/frankenphp/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      SERVER_ROOT: /app/examples/public
       MERCURE_HUB_URL: http://mercure/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost/.well-known/mercure}
-    env_file:
-      - .env
-    tty: true
+    volumes:
+      - ./examples:/app
     depends_on:
       - redis
       - mercure
-    ports:
-      - "80:80" # HTTP
 
   mercure:
     image: dunglas/mercure
-    ports:
-      - "3000:80"
     environment:
       SERVER_NAME: :80
       MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
@@ -40,8 +39,6 @@ services:
 
   redis:
     image: redis:8.4.0
-    ports:
-      - "6379:6379"
 
   e2e:
     build:
@@ -51,14 +48,10 @@ services:
     volumes:
       - ./e2e:/app/e2e
     environment:
-      BASE_URL: http://php
+      BASE_URL: http://gateway
     env_file:
       - .env
     depends_on:
-      - redis
+      - gateway
     command: >
       sh -c "npm install && npx playwright test"
-
-volumes:
-  caddy_data:
-  caddy_config:

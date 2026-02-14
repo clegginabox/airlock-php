@@ -1,4 +1,0 @@
-framework:
-  secret: S0ME_SECRET
-  session:
-    enabled: true

@@ -1,0 +1,180 @@
+{% extends "layout/base.twig" %}
+
+{% block title %}You Made It!{% endblock %}
+
+{% block styles %}
+    <style>
+        @keyframes scale-in {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes check-draw {
+            0% { stroke-dashoffset: 48; }
+            100% { stroke-dashoffset: 0; }
+        }
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes countdown-ring {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: 283; }
+        }
+
+        .check-circle {
+            animation: scale-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .check-mark {
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: check-draw 0.4s ease-out 0.5s forwards;
+        }
+        .fade-up {
+            opacity: 0;
+            animation: fade-up 0.5s ease-out forwards;
+        }
+        .fade-up-1 { animation-delay: 0.3s; }
+        .fade-up-2 { animation-delay: 0.5s; }
+        .fade-up-3 { animation-delay: 0.7s; }
+        .fade-up-4 { animation-delay: 0.9s; }
+
+        /* Confetti */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 50;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            border-radius: 2px;
+            animation: confetti-fall linear forwards;
+        }
+
+        /* Countdown ring */
+        .countdown-ring {
+            transform: rotate(-90deg);
+        }
+        .countdown-track {
+            fill: none;
+            stroke: oklch(var(--bc) / 0.1);
+            stroke-width: 4;
+        }
+        .countdown-progress {
+            fill: none;
+            stroke: oklch(var(--su));
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 0;
+            animation: countdown-ring 5s linear forwards;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {# Confetti #}
+    <div class="confetti-container" id="confetti"></div>
+
+    <main class="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-12 text-center sm:py-16">
+        <section class="overflow-hidden rounded-3xl border border-base-300 bg-base-200 p-8 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.6)] backdrop-blur sm:p-12">
+
+            {# Animated check icon #}
+            <div class="check-circle mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-success/15">
+                <svg class="h-16 w-16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path class="check-mark" d="M5 13l4 4L19 7" stroke="oklch(var(--su))" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            {# Heading #}
+            <h1 class="fade-up fade-up-1 text-4xl font-black sm:text-5xl">
+                You Made It!
+            </h1>
+
+            <p class="fade-up fade-up-2 mt-4 text-lg text-base-content/60">
+                You've been admitted through the airlock. Your slot is now active.
+            </p>
+
+            {# Countdown ring #}
+            <div class="fade-up fade-up-3 mt-8 flex flex-col items-center">
+                <div class="relative">
+                    <svg class="countdown-ring h-24 w-24" viewBox="0 0 100 100">
+                        <circle class="countdown-track" cx="50" cy="50" r="45"/>
+                        <circle class="countdown-progress" cx="50" cy="50" r="45"/>
+                    </svg>
+                    <span id="countdown-text" class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-base-content">5</span>
+                </div>
+                <p class="mt-3 text-sm text-base-content/40">Auto-releasing slot...</p>
+            </div>
+
+            {# Back button #}
+            <div class="fade-up fade-up-4 mt-8">
+                <a href="/redis-lottery-queue" class="btn btn-ghost btn-lg rounded-full">
+                    Back to Queue
+                </a>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    // --- Confetti ---
+    var container = document.getElementById('confetti');
+    var colors = [
+        'oklch(0.75 0.18 150)', // green
+        'oklch(0.7 0.15 250)',  // blue
+        'oklch(0.8 0.15 85)',   // yellow
+        'oklch(0.7 0.2 330)',   // pink
+        'oklch(0.75 0.15 30)',  // orange
+        'oklch(0.65 0.2 290)', // purple
+    ];
+
+    for (var i = 0; i < 40; i++) {
+        var piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.width = (Math.random() * 8 + 6) + 'px';
+        piece.style.height = (Math.random() * 8 + 6) + 'px';
+        piece.style.animationDuration = (Math.random() * 2 + 2.5) + 's';
+        piece.style.animationDelay = (Math.random() * 1.5) + 's';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        container.appendChild(piece);
+    }
+
+    // --- Countdown + auto-release ---
+    var remaining = 5;
+    var countdownText = document.getElementById('countdown-text');
+
+    var timer = setInterval(function () {
+        remaining--;
+        countdownText.textContent = remaining;
+        if (remaining <= 0) {
+            clearInterval(timer);
+            countdownText.textContent = '0';
+            // Release slot
+            var clientId = sessionStorage.getItem('clientId') || '';
+                fetch('/redis-lottery-queue/release', {
+                    method: 'POST',
+                    headers: { 'X-Client-Id': clientId },
+                })
+                .catch(function () {});
+        }
+    }, 1000);
+})();
+</script>
+{% endblock %}
