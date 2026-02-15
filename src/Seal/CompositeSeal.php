@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Clegginabox\Airlock\Seal;
 
-class CompositeSeal implements Seal, ReleasableSeal, RefreshableSeal
+final readonly class CompositeSeal implements Seal, ReleasableSeal
 {
     public function __construct(
-        private LockingSeal&ReleasableSeal&RefreshableSeal $lockingSeal,
-        private RateLimitingSeal $rateLimitingSeal
+        private Seal&ReleasableSeal $lockingSeal,
+        private Seal $rateLimitingSeal
     ) {
     }
 
@@ -34,10 +34,5 @@ class CompositeSeal implements Seal, ReleasableSeal, RefreshableSeal
     public function release(SealToken $token): void
     {
         $this->lockingSeal->release($token);
-    }
-
-    public function refresh(SealToken $token, ?float $ttlInSeconds = null): SealToken
-    {
-        return $this->lockingSeal->refresh($token, $ttlInSeconds);
     }
 }

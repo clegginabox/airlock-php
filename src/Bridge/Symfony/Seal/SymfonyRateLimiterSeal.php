@@ -7,11 +7,11 @@ namespace Clegginabox\Airlock\Bridge\Symfony\Seal;
 use Clegginabox\Airlock\Seal\RateLimitingSeal;
 use Symfony\Component\RateLimiter\LimiterInterface;
 
-final readonly class SymfonyRateLimiterSeal implements RateLimitingSeal
+class SymfonyRateLimiterSeal implements RateLimitingSeal
 {
     public function __construct(
-        private LimiterInterface $limiter,
-        private string $resource = 'waiting-room',
+        private readonly LimiterInterface $limiter,
+        private readonly string $resource = 'waiting-room',
     ) {
     }
 
