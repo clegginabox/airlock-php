@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\GlobalLock;
+namespace App\Examples\GlobalLock;
 
 enum GlobalLock: string
 {

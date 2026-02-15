@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Examples\GlobalLock;
 
 use App\Factory\AirlockFactory;
-use App\GlobalLock\GlobalLock;
 use Clegginabox\Airlock\EntryResult;
 use Clegginabox\Airlock\Seal\SealToken;
 use Redis;
@@ -25,11 +24,6 @@ final readonly class GlobalLockService
 
     public function start(string $clientId, int $durationSeconds = 10): EntryResult
     {
-        $envDuration = getenv('GLOBAL_LOCK_TIMEOUT');
-        if ($envDuration !== false && is_numeric($envDuration)) {
-            $durationSeconds = max(1, (int) $envDuration);
-        }
-
         $airlock = $this->airlockFactory->globalLock($durationSeconds);
 
         $result = $airlock->enter($clientId);

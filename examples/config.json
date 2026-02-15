@@ -1,0 +1,13 @@
+{
+  "allowed_origins": ["*"],
+  "allow_anonymous_connect_without_token": true,
+  "client_anonymous": true,
+  "channel_namespaces": [],
+  "allow_subscribe_for_anonymous": true,
+  "allow_subscribe_for_client": true,
+  "api_key": "airlock-demo-api-key",
+  "grpc_api": {
+    "enabled": true,
+    "address": "0.0.0.0:10000"
+  }
+}

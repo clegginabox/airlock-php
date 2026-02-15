@@ -1,4 +1,5 @@
 :80 {
 	reverse_proxy /.well-known/mercure* mercure:80
+	reverse_proxy /connection/websocket centrifugo:8000
 	reverse_proxy php:8080
 }

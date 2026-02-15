@@ -3,186 +3,18 @@
 <head>
     <title>{% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="/styles/prism-atom-dark.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/prism.min.js" integrity="sha512-UOoJElONeUNzQbbKQbjldDf9MwOHqxNz49NNJJ1d90yp+X9edsHyJoAs6O4K19CZGaIdjI5ohK+O2y5lBTW6uQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-php.min.js" integrity="sha512-6UGCfZS8v5U+CkSBhDy+0cA3hHrcEIlIy2++BAjetYt+pnKGWGzcn+Pynk41SIiyV2Oj0IBOLqWCKS3Oa+v/Aw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-php-extras.min.js" integrity="sha512-slk6u22Z59/OgxTpC6/+BRJXb8f97I04A2KbD2nmvdrkBzequmHsf3Tm6n4iWW+Scf1j1f3qe+xj3DWtAgCXfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font: 400 16px 'Inter', sans-serif;
-        }
-
-        .wrapper {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px 0;
-            background: linear-gradient(135deg, oklch(0.30 0.12 260 / 0.5), oklch(0.16 0.02 260));
-        }
-
-        .wrapper::before,
-        .wrapper::after,
-        .bg::before,
-        .bg::after {
-            position: absolute;
-            left: 0;
-            top: 0;
-            content: '';
-            width: 100%;
-            height: 100%;
-        }
-
-        .bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            padding: 0 15px;
-            width: 100%;
-            max-width: 949px;
-        }
-
-        .error-code-text {
-            margin: 0 auto 38px;
-            max-width: 635px;
-            font-weight: 600;
-            font-size: 200px;
-            text-align: center;
-            color: #3F87D2;
-        }
-
-        .main-title {
-            margin: 0 auto 38px;
-            max-width: 635px;
-            font-weight: 900;
-            font-size: 36px;
-            line-height: 150%;
-            text-align: center;
-        }
-
-        .main-title span {
-            font-weight: 700;
-            color: #3F87D2;
-        }
-
-        .main-description {
-            margin: 0 auto 47px;
-            max-width: 803px;
-            font-size: 16px;
-            line-height: 150%;
-            text-align: center;
-        }
-
-        .version {
-            margin-bottom: 25px;
-            font-size: 12px;
-            line-height: 150%;
-            display: flex;
-            justify-content: center;
-        }
-
-        .version span {
-            margin-left: 15px;
-        }
-
-        .logo {
-            display: flex;
-            justify-content: center;
-        }
-
-        @media (max-width: 1600px) {
-            .wrapper::after {
-                clip-path: polygon(60% 0%, 100% 0, 100% 75%, 42% 100%, 19% 100%);
-            }
-
-            .bg::before {
-                clip-path: polygon(66.7% 89%, 63% 100%, 42% 100%);
-            }
-
-            .bg::after {
-                clip-path: polygon(66.7% 89%, 85% 100%, 64% 100%);
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .main-title {
-                margin-bottom: 17px;
-                font-size: 32px;
-                line-height: 122%;
-            }
-
-            .error-code-text {
-                font-size: 160px;
-            }
-
-            .main-description {
-                margin-bottom: 34px;
-                font-size: 14px;
-            }
-
-            .item {
-                width: calc(50% - 16px);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-title {
-                font-size: 26px;
-            }
-
-            .error-code-text {
-                font-size: 80px;
-            }
-
-            .version {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .box {
-                row-gap: 29px;
-                padding: 26px 29px;
-            }
-
-            .item {
-                width: 100%;
-            }
-
-
-            .bg {
-                display: none;
-            }
-        }
-    </style>
-    {% block styles %}{% endblock %}
+    {{ vite('resources/js/app.js') }}
+    {% block head %}{% endblock %}
 </head>
 <body>
     <nav class="fixed top-0 left-0 right-0 z-50 border-b border-base-300/50 bg-base-100/80 backdrop-blur-md">
         <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5">
             <a href="/" class="text-sm font-black tracking-tight text-base-content">Airlock</a>
             <div class="flex items-center gap-1">
+                <a href="/traffic-control" class="btn btn-ghost btn-sm rounded-lg text-xs">Traffic Control</a>
                 <a href="/global-lock" class="btn btn-ghost btn-sm rounded-lg text-xs">Global Lock</a>
                 <a href="/redis-lottery-queue" class="btn btn-ghost btn-sm rounded-lg text-xs">Lottery Queue</a>
+                {#<a href="/fifo-queue" class="btn btn-ghost btn-sm rounded-lg text-xs">FIFO Queue</a>#}
                 <a href="https://github.com/clegginabox/airlock-php" target="_blank" class="btn btn-ghost btn-sm btn-square rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                 </a>
@@ -197,5 +29,4 @@
     </div>
     {% block scripts %}{% endblock %}
 </body>
-<hidden>{{ context }}</hidden>
 </html>

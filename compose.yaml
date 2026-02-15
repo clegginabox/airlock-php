@@ -8,23 +8,26 @@ services:
     depends_on:
       - php
       - mercure
+      - centrifugo
 
   php:
     build:
       context: .
       dockerfile: Dockerfile
-    working_dir: /app
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       MERCURE_HUB_URL: http://mercure/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost/.well-known/mercure}
+      VITE_DEV: ${VITE_DEV:-false}
     volumes:
-      - ./examples:/app
+      - ./examples:/app/examples
+      - ./src:/app/src
     depends_on:
       - redis
       - mercure
+      - centrifugo
 
   mercure:
     image: dunglas/mercure
@@ -36,6 +39,12 @@ services:
       MERCURE_SUBSCRIBER_JWT_ALG: HS256
       MERCURE_ALLOW_ANONYMOUS: 1
       MERCURE_CORS_ALLOWED_ORIGINS: "*"
+
+  centrifugo:
+    image: centrifugo/centrifugo:v5
+    volumes:
+      - ./examples/config.json:/centrifugo/config.json:ro
+    command: centrifugo --config config.json
 
   redis:
     image: redis:8.4.0

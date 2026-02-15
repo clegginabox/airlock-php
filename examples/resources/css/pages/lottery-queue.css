@@ -1,0 +1,103 @@
+/* Slot animations */
+@keyframes lq-slot-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+@keyframes slot-glow {
+    0%, 100% { box-shadow: 0 0 12px 2px oklch(0.7 0.15 250 / 0.4); }
+    50% { box-shadow: 0 0 24px 6px oklch(0.7 0.15 250 / 0.7); }
+}
+@keyframes lq-slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes barrier-seal {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* Slot circles */
+.slot {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2.5px dashed oklch(from var(--color-base-content) l c h / 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: oklch(from var(--color-base-content) l c h / 0.3);
+}
+.slot.occupied {
+    border: 2.5px solid var(--color-success);
+    color: var(--color-success);
+    background: oklch(from var(--color-success) l c h / 0.1);
+    animation: lq-slot-pulse 2.5s ease-in-out infinite;
+}
+.slot.you {
+    border: 2.5px solid var(--color-accent);
+    color: var(--color-accent);
+    background: oklch(from var(--color-accent) l c h / 0.12);
+    animation: slot-glow 2s ease-in-out infinite;
+}
+
+/* Barrier line */
+.barrier {
+    height: 3px;
+    border-radius: 2px;
+    transition: all 0.5s ease;
+    position: relative;
+}
+.barrier.sealed {
+    background: var(--color-error);
+    animation: barrier-seal 2s ease-in-out infinite;
+}
+.barrier.open {
+    background: var(--color-success);
+    opacity: 0.5;
+}
+
+/* Status alert entrance */
+.lq-status-alert {
+    animation: lq-slide-up 0.35s ease-out;
+}
+
+/* Queue badge */
+.queue-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 2px solid oklch(from var(--color-base-content) l c h / 0.15);
+    color: oklch(from var(--color-base-content) l c h / 0.5);
+    transition: all 0.3s ease;
+}
+.queue-badge.you {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: oklch(from var(--color-accent) l c h / 0.1);
+    box-shadow: 0 0 10px 2px oklch(from var(--color-accent) l c h / 0.25);
+}
+
+/* Mobile slots */
+@media (max-width: 640px) {
+    .slot {
+        width: 56px;
+        height: 56px;
+        font-size: 0.65rem;
+    }
+    .queue-badge {
+        width: 30px;
+        height: 30px;
+        font-size: 0.7rem;
+    }
+}

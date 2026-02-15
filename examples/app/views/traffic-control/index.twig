@@ -1,0 +1,179 @@
+{% extends "layout/base.twig" %}
+
+{% block title %}Airlock: LLM Traffic Control{% endblock %}
+
+{% block body %}
+    <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+        <section class="overflow-hidden rounded-3xl border border-base-300 bg-base-200 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.6)] backdrop-blur">
+            <div class="relative p-6 sm:p-8 lg:p-10">
+                <div class="relative space-y-8">
+
+                    {# Header #}
+                    <div class="space-y-4">
+                        <div class="badge badge-primary">Redis</div>
+                        <div class="badge badge-secondary">Symfony Rate Limiter</div>
+                        <div class="badge badge-accent">Symfony Semaphore</div>
+                        <div class="badge badge-info">CompositeSeal</div>
+                        <h1 class="text-3xl font-black sm:text-4xl lg:text-5xl">
+                            LLM Traffic Control
+                        </h1>
+                        <p class="max-w-3xl text-base leading-relaxed text-base-content/70 sm:text-lg">
+                            Route requests across multiple LLM providers, each with different constraints.
+                            Alpha and Gamma have <strong class="text-base-content">rate limits</strong> only.
+                            Beta uses a <strong class="text-base-content">CompositeSeal</strong> &mdash;
+                            both a rate limit <em>and</em> a concurrency limit must pass.
+                        </p>
+                    </div>
+
+                    {# Stat cards #}
+                    <div class="grid gap-4 sm:grid-cols-4">
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Total RPM Budget</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">130</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Beta Concurrency</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">5 slots</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Admitted</p>
+                            <p id="stat-admitted" class="mt-2 text-2xl font-black text-success/50">0</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Rejected</p>
+                            <p id="stat-rejected" class="mt-2 text-2xl font-black text-error/50">0</p>
+                        </div>
+                    </div>
+
+                    {# Provider lanes #}
+                    <div class="space-y-3">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-base-content/40">Provider Lanes</p>
+
+                        {# Alpha — Rate limit only #}
+                        <div id="lane-alpha" class="provider-lane" style="--pipe-color: var(--color-primary)">
+                            <div class="status-dot"></div>
+                            <div class="w-28 flex-shrink-0">
+                                <p class="text-sm font-black">Alpha</p>
+                                <p class="text-[0.6rem] font-medium text-base-content/40">50 RPM</p>
+                            </div>
+                            <div class="rate-track">
+                                <div id="fill-alpha" class="rate-fill"></div>
+                            </div>
+                            <span id="count-alpha" class="w-14 text-right text-sm font-mono font-bold text-base-content/40">0/50</span>
+                            <button class="kill-btn" data-provider="alpha">Kill</button>
+                        </div>
+
+                        {# Beta — CompositeSeal: rate limit + concurrency #}
+                        <div id="lane-beta" class="provider-lane" style="--pipe-color: var(--color-secondary)">
+                            <div class="status-dot"></div>
+                            <div class="w-28 flex-shrink-0">
+                                <p class="text-sm font-black">Beta <span class="badge badge-xs badge-info">composite</span></p>
+                                <p class="text-[0.6rem] font-medium text-base-content/40">50 RPM + 5 conc.</p>
+                            </div>
+                            <div class="flex-1 space-y-2">
+                                <div class="rate-track">
+                                    <div id="fill-beta" class="rate-fill"></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[0.55rem] font-semibold uppercase tracking-wider text-base-content/30">Slots</span>
+                                    <div id="conc-0" class="conc-slot"></div>
+                                    <div id="conc-1" class="conc-slot"></div>
+                                    <div id="conc-2" class="conc-slot"></div>
+                                    <div id="conc-3" class="conc-slot"></div>
+                                    <div id="conc-4" class="conc-slot"></div>
+                                    <span id="conc-label" class="text-[0.6rem] font-mono font-bold text-base-content/30">0/5</span>
+                                </div>
+                            </div>
+                            <span id="count-beta" class="w-14 text-right text-sm font-mono font-bold text-base-content/40">0/50</span>
+                            <button class="kill-btn" data-provider="beta">Kill</button>
+                        </div>
+
+                        {# Gamma — Rate limit only #}
+                        <div id="lane-gamma" class="provider-lane" style="--pipe-color: var(--color-accent)">
+                            <div class="status-dot"></div>
+                            <div class="w-28 flex-shrink-0">
+                                <p class="text-sm font-black">Gamma</p>
+                                <p class="text-[0.6rem] font-medium text-base-content/40">30 RPM</p>
+                            </div>
+                            <div class="rate-track">
+                                <div id="fill-gamma" class="rate-fill"></div>
+                            </div>
+                            <span id="count-gamma" class="w-14 text-right text-sm font-mono font-bold text-base-content/40">0/30</span>
+                            <button class="kill-btn" data-provider="gamma">Kill</button>
+                        </div>
+                    </div>
+
+                    {# Action area #}
+                    <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm sm:p-5">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold uppercase tracking-widest text-base-content/40">Batch</span>
+                                <div class="join">
+                                    <button class="batch-btn join-item btn btn-sm" data-count="10">10</button>
+                                    <button class="batch-btn join-item btn btn-sm active" data-count="25">25</button>
+                                    <button class="batch-btn join-item btn btn-sm" data-count="50">50</button>
+                                    <button class="batch-btn join-item btn btn-sm" data-count="100">100</button>
+                                    <button class="batch-btn join-item btn btn-sm" data-count="150">150</button>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="simulate" type="button" class="btn btn-primary rounded-full">
+                                    Burst 25 Requests
+                                </button>
+                                <button id="reset" type="button" class="btn btn-ghost rounded-full">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="status" aria-live="polite"></div>
+                    </div>
+
+                    {# Request log #}
+                    <div class="rounded-2xl border border-base-300 bg-base-100/50 p-6">
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-base-content/40">Request Log</p>
+                        <div id="log" class="max-h-56 space-y-1 overflow-y-auto"></div>
+                        <p id="log-empty" class="text-sm text-base-content/30">No requests yet</p>
+                    </div>
+
+                    {# Code snippet #}
+                    <div class="collapse collapse-arrow rounded-2xl border border-base-300 bg-base-100/50">
+                        <input type="checkbox" />
+                        <div class="collapse-title text-sm font-semibold uppercase tracking-[0.12em] text-base-content/50">
+                            How It Works
+                        </div>
+                        <div class="collapse-content">
+                            <pre class="!m-0 rounded-xl"><code class="language-php">
+// Alpha &amp; Gamma — rate limit only
+$alpha = new RateLimitingAirlock(
+    new SymfonyRateLimiterSeal($factory-&gt;create('alpha')),
+);
+
+// Beta — rate limit + concurrency via CompositeSeal
+$beta = new OpportunisticAirlock(
+    new CompositeSeal(
+        lockingSeal:      new SymfonySemaphoreSeal($semFactory, limit: 5),
+        rateLimitingSeal: new SymfonyRateLimiterSeal($factory-&gt;create('beta')),
+    ),
+);
+
+// Route to first available provider
+foreach ([$alpha, $beta, $gamma] as $name =&gt; $airlock) {
+    $result = $airlock-&gt;enter($userId);
+    if ($result-&gt;isAdmitted()) {
+        return $provider-&gt;call($prompt);
+    }
+}
+
+throw new AllProvidersBusyException();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+    {{ vite('resources/js/pages/traffic-control.js') }}
+{% endblock %}

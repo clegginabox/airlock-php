@@ -7,6 +7,7 @@ namespace App\Application;
 use Spiral\Boot\Bootloader\CoreBootloader;
 use Spiral\Bootloader as Framework;
 use Spiral\Bootloader\Http\HttpBootloader;
+use Spiral\Broadcasting\Bootloader\BroadcastingBootloader;
 use Spiral\Cache\Bootloader\CacheBootloader;
 use Spiral\Debug\Bootloader\DumperBootloader;
 use Spiral\DotEnv\Bootloader\DotenvBootloader;
@@ -81,6 +82,9 @@ class Kernel extends \Spiral\Framework\Kernel
             // Cache
             CacheBootloader::class,
 
+            // Broadcasting (Centrifugo is called directly via HTTP API)
+            BroadcastingBootloader::class,
+
             NyholmBootloader::class,
 
             // Console commands
@@ -102,6 +106,7 @@ class Kernel extends \Spiral\Framework\Kernel
     {
         return [
             Bootloader\RedisBootloader::class,
+            Bootloader\ViteBootloader::class,
 
             // Application domain
             Bootloader\AppBootloader::class,

@@ -1,0 +1,72 @@
+@keyframes gl-slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes lock-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes progress-bar {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+.gl-status-alert {
+    animation: gl-slide-up 0.35s ease-out;
+}
+
+/* Lock visual */
+.lock-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid oklch(from var(--color-base-content) l c h / 0.15);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: oklch(from var(--color-base-content) l c h / 0.25);
+}
+.lock-icon.locked {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+    background: oklch(from var(--color-warning) l c h / 0.1);
+    animation: lock-pulse 2s ease-in-out infinite;
+}
+.lock-icon.done {
+    border-color: var(--color-success);
+    color: var(--color-success);
+    background: oklch(from var(--color-success) l c h / 0.1);
+    animation: none;
+}
+.lock-icon.rejected {
+    border-color: var(--color-error);
+    color: var(--color-error);
+    background: oklch(from var(--color-error) l c h / 0.1);
+    animation: none;
+}
+
+/* Progress bar */
+.progress-track {
+    height: 4px;
+    border-radius: 2px;
+    background: oklch(from var(--color-base-content) l c h / 0.1);
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--color-warning);
+    animation: progress-bar var(--duration) linear forwards;
+}
+
+@media (max-width: 640px) {
+    .lock-icon {
+        width: 72px;
+        height: 72px;
+    }
+    .lock-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+}

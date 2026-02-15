@@ -1,0 +1,181 @@
+/* Google Fonts — must precede all other rules */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap");
+
+@import "tailwindcss";
+@plugin "daisyui" {
+    themes: night --default, dark --prefersdark;
+}
+
+@source "../../app/views/**/*.twig";
+@source "../js/**/*.js";
+
+/* Prism theme */
+@import "./vendor/prism-atom-dark.css";
+
+/* Page CSS */
+@import "./pages/traffic-control.css";
+@import "./pages/global-lock.css";
+@import "./pages/lottery-queue.css";
+@import "./pages/lottery-queue-success.css";
+
+/* ── Base layout ────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font: 400 16px 'Inter', sans-serif;
+}
+
+.wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+    background: linear-gradient(135deg, oklch(0.30 0.12 260 / 0.5), oklch(0.16 0.02 260));
+}
+
+.wrapper::before,
+.wrapper::after,
+.bg::before,
+.bg::after {
+    position: absolute;
+    left: 0;
+    top: 0;
+    content: '';
+    width: 100%;
+    height: 100%;
+}
+
+.bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    padding: 0 15px;
+    width: 100%;
+    max-width: 949px;
+}
+
+.error-code-text {
+    margin: 0 auto 38px;
+    max-width: 635px;
+    font-weight: 600;
+    font-size: 200px;
+    text-align: center;
+    color: #3F87D2;
+}
+
+.main-title {
+    margin: 0 auto 38px;
+    max-width: 635px;
+    font-weight: 900;
+    font-size: 36px;
+    line-height: 150%;
+    text-align: center;
+}
+
+.main-title span {
+    font-weight: 700;
+    color: #3F87D2;
+}
+
+.main-description {
+    margin: 0 auto 47px;
+    max-width: 803px;
+    font-size: 16px;
+    line-height: 150%;
+    text-align: center;
+}
+
+.version {
+    margin-bottom: 25px;
+    font-size: 12px;
+    line-height: 150%;
+    display: flex;
+    justify-content: center;
+}
+
+.version span {
+    margin-left: 15px;
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
+}
+
+@media (max-width: 1600px) {
+    .wrapper::after {
+        clip-path: polygon(60% 0%, 100% 0, 100% 75%, 42% 100%, 19% 100%);
+    }
+
+    .bg::before {
+        clip-path: polygon(66.7% 89%, 63% 100%, 42% 100%);
+    }
+
+    .bg::after {
+        clip-path: polygon(66.7% 89%, 85% 100%, 64% 100%);
+    }
+}
+
+@media (max-width: 1024px) {
+    .main-title {
+        margin-bottom: 17px;
+        font-size: 32px;
+        line-height: 122%;
+    }
+
+    .error-code-text {
+        font-size: 160px;
+    }
+
+    .main-description {
+        margin-bottom: 34px;
+        font-size: 14px;
+    }
+
+    .item {
+        width: calc(50% - 16px);
+    }
+}
+
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 26px;
+    }
+
+    .error-code-text {
+        font-size: 80px;
+    }
+
+    .version {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .box {
+        row-gap: 29px;
+        padding: 26px 29px;
+    }
+
+    .item {
+        width: 100%;
+    }
+
+
+    .bg {
+        display: none;
+    }
+}

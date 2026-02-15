@@ -21,7 +21,6 @@ final readonly class FifoQueue implements QueueInterface
 
     public function add(string $identifier, int $priority = 0): int
     {
-        // FIFO queue ignores priority - items always go to the back
         return $this->storage->addToBack($identifier);
     }
 

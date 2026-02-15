@@ -4,32 +4,98 @@ declare(strict_types=1);
 
 namespace App\Factory;
 
-use App\GlobalLock\GlobalLock;
-use App\RedisLotteryQueue\RedisLotteryQueue;
+use App\Examples\GlobalLock\GlobalLock;
+use App\Examples\RedisLotteryQueue\RedisLotteryQueue;
+use App\Examples\TrafficControl\TrafficControl;
+use Clegginabox\Airlock\Airlock;
 use Clegginabox\Airlock\Bridge\Mercure\MercureAirlockNotifier;
 use Clegginabox\Airlock\Bridge\Symfony\Mercure\SymfonyMercureHubFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
+use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyRateLimiterSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
 use Clegginabox\Airlock\OpportunisticAirlock;
 use Clegginabox\Airlock\Queue\LotteryQueue;
 use Clegginabox\Airlock\Queue\Storage\Lottery\RedisLotteryQueueStore;
 use Clegginabox\Airlock\QueueAirlock;
+use Clegginabox\Airlock\RateLimitingAirlock;
+use Clegginabox\Airlock\Seal\CompositeSeal;
 use Redis;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\RedisStore as LockRedisStore;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\Storage\CacheStorage;
 use Symfony\Component\Semaphore\SemaphoreFactory;
 use Symfony\Component\Semaphore\Store\RedisStore as SemaphoreRedisStore;
 
 /**
  * In a framework you'd configure these factory methods in a DI container.
  */
-#[Autoconfigure(shared: false)]
 class AirlockFactory
 {
     public function __construct(private Redis $redis)
     {
+    }
+
+    /**
+     * Traffic Control Example
+     *
+     * Seal: Redis backed Symfony Lock (one per provider)
+     * Queue: None
+     * Airlock: OpportunisticAirlock
+     */
+    public function trafficControl(string $provider, int $ttl = 10): Airlock
+    {
+        $resource = match ($provider) {
+            'alpha' => TrafficControl::RESOURCE_ALPHA->value,
+            'beta' => TrafficControl::RESOURCE_BETA->value,
+            'gamma' => TrafficControl::RESOURCE_GAMMA->value,
+            default => throw new \InvalidArgumentException("Unknown provider: {$provider}"),
+        };
+
+        $storage = new CacheStorage(new RedisAdapter($this->redis));
+
+        $thirtyPerMinuteLimit = new RateLimiterFactory([
+            'policy' => 'fixed_window',
+            'interval' => '1 minute',
+            'limit' => 30,
+            'id' => 'thirty-per-minute-limit',
+        ], $storage);
+
+        $fiftyPerMinuteLimit = new RateLimiterFactory([
+            'policy' => 'fixed_window',
+            'interval' => '1 minute',
+            'limit' => 50,
+            'id' => 'fifty-per-minute-limit',
+        ], $storage);
+
+        // Alpha - 50 RPM
+        if ($resource === TrafficControl::RESOURCE_ALPHA->value) {
+            return new RateLimitingAirlock(
+                new SymfonyRateLimiterSeal($fiftyPerMinuteLimit->create(TrafficControl::RESOURCE_ALPHA->value))
+            );
+        }
+
+        // Beta - 50 RPM, 2 concurrent requests
+        if ($resource === TrafficControl::RESOURCE_BETA->value) {
+            $seal = new CompositeSeal(
+                new SymfonySemaphoreSeal(
+                    new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
+                    resource: $resource,
+                    limit: 5,
+                    ttlInSeconds: $ttl
+                ),
+                new SymfonyRateLimiterSeal($fiftyPerMinuteLimit->create(TrafficControl::RESOURCE_BETA->value))
+            );
+
+            return new OpportunisticAirlock($seal);
+        }
+
+        // Gamma - 30 RPM
+        return new RateLimitingAirlock(
+            new SymfonyRateLimiterSeal($thirtyPerMinuteLimit->create(TrafficControl::RESOURCE_GAMMA->value))
+        );
     }
 
     /**

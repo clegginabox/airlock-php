@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\RedisLotteryQueue;
+namespace App\Examples\RedisLotteryQueue;
 
 enum RedisLotteryQueue: string
 {

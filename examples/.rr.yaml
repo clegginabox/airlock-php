@@ -12,8 +12,8 @@ http:
             - .php
             - .htaccess
     pool:
-        debug: true
-        num_workers: 1
+        debug: false
+        num_workers: 4
         supervisor:
             max_worker_memory: 100
 server:

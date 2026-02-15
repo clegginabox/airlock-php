@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Examples\RedisLotteryQueue;
 
 use App\Factory\AirlockFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreToken;

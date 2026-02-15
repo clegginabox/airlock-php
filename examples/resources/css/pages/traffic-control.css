@@ -1,0 +1,153 @@
+@keyframes slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes routed-flash {
+    0% { background: var(--color-base-100); border-color: oklch(from var(--color-base-content) l c h / 0.1); }
+    30% { background: oklch(from var(--color-success) l c h / 0.12); border-color: oklch(from var(--color-success) l c h / 0.6); }
+    100% { background: var(--color-base-100); border-color: oklch(from var(--color-base-content) l c h / 0.1); }
+}
+@keyframes rejected-flash {
+    0% { border-color: oklch(from var(--color-base-content) l c h / 0.1); }
+    30% { border-color: oklch(from var(--color-error) l c h / 0.5); }
+    100% { border-color: oklch(from var(--color-base-content) l c h / 0.1); }
+}
+@keyframes capacity-full-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+@keyframes count-bump {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+@keyframes slot-fill {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.status-alert { animation: slide-up 0.35s ease-out; }
+
+/* Provider lane */
+.provider-lane {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    border: 1.5px solid oklch(from var(--color-base-content) l c h / 0.1);
+    background: var(--color-base-100);
+    transition: border-color 0.4s ease, opacity 0.4s ease;
+}
+.provider-lane.down {
+    border-color: oklch(from var(--color-error) l c h / 0.3);
+    opacity: 0.35;
+}
+.provider-lane.flash-admit {
+    animation: routed-flash 1s ease-out;
+}
+.provider-lane.flash-reject {
+    animation: rejected-flash 0.8s ease-out;
+}
+
+/* Status indicator dot */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-success);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+.provider-lane.down .status-dot {
+    background: var(--color-error);
+}
+
+/* Rate limit track */
+.rate-track {
+    flex: 1;
+    height: 28px;
+    border-radius: 14px;
+    background: oklch(from var(--color-base-content) l c h / 0.06);
+    position: relative;
+    overflow: hidden;
+}
+.rate-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--pipe-color);
+    opacity: 0.25;
+    transition: width 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 0%;
+}
+.rate-fill.full {
+    opacity: 0.4;
+    animation: capacity-full-pulse 1.5s ease-in-out infinite;
+}
+
+/* Concurrency slots (Beta) */
+.conc-slot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px dashed oklch(from var(--color-base-content) l c h / 0.15);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0;
+}
+.conc-slot.filled {
+    border: 2px solid var(--pipe-color);
+    background: oklch(from var(--color-secondary) l c h / 0.25);
+    animation: slot-fill 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Kill switch */
+.kill-btn {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.5rem;
+    border: 1.5px solid oklch(from var(--color-base-content) l c h / 0.15);
+    background: transparent;
+    color: oklch(from var(--color-base-content) l c h / 0.5);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.kill-btn:hover {
+    border-color: oklch(from var(--color-error) l c h / 0.5);
+    color: var(--color-error);
+}
+.kill-btn.revive {
+    border-color: oklch(from var(--color-success) l c h / 0.6);
+    color: var(--color-success);
+    background: oklch(from var(--color-success) l c h / 0.1);
+}
+
+/* Request log */
+.log-entry {
+    animation: slide-up 0.15s ease-out;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.count-bump { animation: count-bump 0.3s ease-out; }
+
+/* Batch selector */
+.batch-btn.active {
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+    border-color: var(--color-primary);
+}
+
+@media (max-width: 640px) {
+    .provider-lane { gap: 0.5rem; padding: 0.75rem; }
+    .rate-track { height: 22px; }
+    .conc-slot { width: 18px; height: 18px; }
+}

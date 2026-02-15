@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Endpoint\Web;
 
-use App\Service\GlobalLockService;
+use App\Examples\GlobalLock\GlobalLockService;
 use Psr\Http\Message\ServerRequestInterface;
 use Spiral\Prototype\Traits\PrototypeTrait;
 use Spiral\Router\Annotation\Route;
