@@ -66,6 +66,7 @@ class OpportunisticAirlockTest extends TestCase
         $entryResult = $this->airlock->enter('test');
 
         $this->assertTrue($entryResult->isAdmitted());
+        $this->assertSame($this->mockSealToken, $entryResult->getToken());
         $this->assertEquals('', $entryResult->getTopic());
     }
 
@@ -87,6 +88,15 @@ class OpportunisticAirlockTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
         $this->airlock->leave('identifier');
+    }
+
+    public function testReleaseDelegatesToSeal(): void
+    {
+        $this->mockSeal->expects($this->once())
+            ->method('release')
+            ->with($this->identicalTo($this->mockSealToken));
+
+        $this->airlock->release($this->mockSealToken);
     }
 
     #[AllowMockObjectsWithoutExpectations]

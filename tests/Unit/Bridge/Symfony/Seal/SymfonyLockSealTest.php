@@ -14,6 +14,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\LockExpiredException;
+use Symfony\Component\Lock\Exception\LockReleasingException;
 use Symfony\Component\Lock\Key;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\SharedLockInterface;
@@ -94,6 +95,25 @@ class SymfonyLockSealTest extends TestCase
 
         $token = $this->seal->tryAcquire();
         $this->assertInstanceof(SymfonyLockToken::class, $token);
+
+        $this->seal->release($token);
+    }
+
+    public function testReleaseWrapsLockReleasingException(): void
+    {
+        $token = new SymfonyLockToken(new Key('lock-seal-test'));
+
+        $this->mockFactory->expects($this->once())
+            ->method('createLockFromKey')
+            ->with($this->identicalTo($token->getKey()))
+            ->willReturn($this->mockLock);
+
+        $this->mockLock->expects($this->once())
+            ->method('release')
+            ->willThrowException(new LockReleasingException('boom'));
+
+        $this->expectException(SealReleasingException::class);
+        $this->expectExceptionMessage('Unable to release lock: boom');
 
         $this->seal->release($token);
     }
