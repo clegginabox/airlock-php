@@ -24,10 +24,30 @@ services:
     volumes:
       - ./examples:/app/examples
       - ./src:/app/src
+      - ./resources:/app/resources
     depends_on:
       - redis
       - mercure
       - centrifugo
+
+  workers:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: supervisord -n -c /app/examples/supervisord.conf
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MERCURE_HUB_URL: http://mercure/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost/.well-known/mercure}
+    volumes:
+      - ./examples:/app/examples
+      - ./src:/app/src
+      - ./resources:/app/resources
+    depends_on:
+      - redis
+      - mercure
 
   mercure:
     image: dunglas/mercure

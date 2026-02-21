@@ -143,13 +143,13 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
     }
 
     function updateQueueDepth(delta) {
-        queueDepth = Math.max(0, queueDepth + delta);
+/*        queueDepth = Math.max(0, queueDepth + delta);
         queueCountValue.textContent = queueDepth;
         if (queueDepth > 0) {
             queueCount.classList.remove('hidden');
         } else {
             queueCount.classList.add('hidden');
-        }
+        }*/
     }
 
     eventLog.addEventListener('airlock-log-entry', function (e) {

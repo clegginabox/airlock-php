@@ -18,8 +18,7 @@ use function Amp\Future\awaitAll;
 #[AsCommand(
     name: 'bots:queue:lottery',
     description: 'Spawns bots onto the lottery queue'
-)
-]
+)]
 class LotteryQueueBotsCommand extends Command
 {
     /**
