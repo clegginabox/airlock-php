@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Endpoint\Web;
 
+use App\Examples\RedisLotteryQueue\RedisLotteryQueue;
 use App\Examples\RedisLotteryQueue\RedisLotteryQueueService;
 use Psr\Http\Message\ServerRequestInterface;
 use Spiral\Prototype\Traits\PrototypeTrait;
@@ -21,7 +22,11 @@ class RedisLotteryQueueController
     #[Route(route: '/redis-lottery-queue', name: 'redis_lottery_queue_index')]
     public function index(): string
     {
-        return $this->views->render('redis-lottery-queue/index');
+        return $this->views->render('redis-lottery-queue/index', [
+            'hubUrl'      => $this->service->getHubUrl(),
+            'globalToken' => $this->service->getGlobalToken(),
+            'globalTopic' => RedisLotteryQueue::NAME->value,
+        ]);
     }
 
     #[Route(route: '/redis-lottery-queue/start', name: 'redis_lottery_queue_start')]

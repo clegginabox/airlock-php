@@ -11,8 +11,10 @@ use Spiral\Broadcasting\Bootloader\BroadcastingBootloader;
 use Spiral\Cache\Bootloader\CacheBootloader;
 use Spiral\Debug\Bootloader\DumperBootloader;
 use Spiral\DotEnv\Bootloader\DotenvBootloader;
+use Spiral\League\Event\Bootloader\EventBootloader;
 use Spiral\Monolog\Bootloader\MonologBootloader;
 use Spiral\Nyholm\Bootloader\NyholmBootloader;
+use Spiral\OpenTelemetry\Bootloader\OpenTelemetryBootloader;
 use Spiral\Prototype\Bootloader\PrototypeBootloader;
 use Spiral\Queue\Bootloader\QueueBootloader;
 use Spiral\RoadRunnerBridge\Bootloader as RoadRunnerBridge;
@@ -76,8 +78,15 @@ class Kernel extends \Spiral\Framework\Kernel
             ViewsBootloader::class,
             TwigBootloader::class,
 
+            // OTEL
+            OpenTelemetryBootloader::class,
+
             // Queue
             QueueBootloader::class,
+
+            // Events
+            //EventsBootloader::class,
+            EventBootloader::class,
 
             // Cache
             CacheBootloader::class,

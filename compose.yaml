@@ -48,6 +48,8 @@ services:
 
   redis:
     image: redis:8.4.0
+    ports:
+      - "6379:6379"
 
   e2e:
     build:

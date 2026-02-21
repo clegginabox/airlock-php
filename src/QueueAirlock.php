@@ -25,6 +25,10 @@ final readonly class QueueAirlock implements Airlock, ReleasingAirlock
         $position = $this->queue->add($identifier, $priority);
 
         if ($position !== 1) {
+            // Ensure a candidate exists — self-heals if the candidate key
+            // expired without anyone claiming (e.g. holder crashed, TTL lapsed).
+            $this->queue->peek();
+
             return EntryResult::queued($position, $this->topicFor($identifier));
         }
 

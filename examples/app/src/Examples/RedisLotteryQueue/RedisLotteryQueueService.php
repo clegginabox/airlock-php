@@ -6,22 +6,18 @@ namespace App\Examples\RedisLotteryQueue;
 
 use App\Factory\AirlockFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreToken;
+use Clegginabox\Airlock\Decorator\EventDispatchingAirlock;
 use Clegginabox\Airlock\EntryResult;
-use Clegginabox\Airlock\QueueAirlock;
 use Symfony\Component\Mercure\Jwt\LcobucciFactory;
 use Symfony\Component\Semaphore\Key;
 
 final class RedisLotteryQueueService
 {
-    private QueueAirlock $airlock;
+    private EventDispatchingAirlock $airlock;
 
     public function __construct(private readonly AirlockFactory $airlockFactory)
     {
-        $this->airlock = $this->airlockFactory->redisLotteryQueueWithMercure(
-            limit: 1, // Only allow one person "inside" at a time
-            ttl: 60, // 60 second time limit
-            claimWindow: 10, // 10 seconds to claim the place
-        );
+        $this->airlock = $this->airlockFactory->redisLotteryQueueWithMercure();
     }
 
     public function start(string $clientId): EntryResult
@@ -37,6 +33,11 @@ final class RedisLotteryQueueService
         }
 
         $this->airlock->release(new SymfonySemaphoreToken($key));
+    }
+
+    public function getPosition(string $clientId): ?int
+    {
+        return $this->airlock->getPosition($clientId);
     }
 
     public function getTopic(string $clientId): string
@@ -55,5 +56,13 @@ final class RedisLotteryQueueService
 
         return new LcobucciFactory($jwtSecret)
             ->create(subscribe: [$this->getTopic($clientId)]);
+    }
+
+    public function getGlobalToken(): string
+    {
+        $jwtSecret = getenv('MERCURE_JWT_SECRET') ?: 'airlock-mercure-secret-32chars-minimum';
+
+        return new LcobucciFactory($jwtSecret)
+            ->create(subscribe: [RedisLotteryQueue::NAME->value]);
     }
 }

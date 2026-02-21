@@ -16,6 +16,7 @@ export default defineConfig({
                 'global-lock': 'resources/js/pages/global-lock.js',
                 'lottery-queue': 'resources/js/pages/lottery-queue.js',
                 'lottery-queue-success': 'resources/js/pages/lottery-queue-success.js',
+                'airlock-event-log': '../resources/js/airlock-event-log.js',
             },
         },
     },

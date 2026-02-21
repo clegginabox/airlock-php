@@ -74,6 +74,9 @@ class QueueAirlockTest extends TestCase
             ->with('identifier')
             ->willReturn(6);
 
+        $this->mockQueue->expects($this->once())
+            ->method('peek');
+
         $entryResult = $this->airlock->enter('identifier');
 
         $this->assertFalse($entryResult->isAdmitted());

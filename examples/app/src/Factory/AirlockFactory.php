@@ -13,6 +13,8 @@ use Clegginabox\Airlock\Bridge\Symfony\Mercure\SymfonyMercureHubFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyRateLimiterSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
+use Clegginabox\Airlock\Decorator\EventDispatchingAirlock;
+use Clegginabox\Airlock\Decorator\LoggingAirlock;
 use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
 use Clegginabox\Airlock\OpportunisticAirlock;
 use Clegginabox\Airlock\Queue\LotteryQueue;
@@ -20,6 +22,8 @@ use Clegginabox\Airlock\Queue\Storage\Lottery\RedisLotteryQueueStore;
 use Clegginabox\Airlock\QueueAirlock;
 use Clegginabox\Airlock\RateLimitingAirlock;
 use Clegginabox\Airlock\Seal\CompositeSeal;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Log\LoggerInterface;
 use Redis;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Lock\LockFactory;
@@ -34,8 +38,11 @@ use Symfony\Component\Semaphore\Store\RedisStore as SemaphoreRedisStore;
  */
 class AirlockFactory
 {
-    public function __construct(private Redis $redis)
-    {
+    public function __construct(
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly LoggerInterface $logger,
+        private Redis $redis,
+    ) {
     }
 
     /**
@@ -151,10 +158,10 @@ class AirlockFactory
     }
 
     public function redisLotteryQueueWithMercure(
-        int $limit = 3,
-        int $ttl = 60,
-        int $claimWindow = 10,
-    ): QueueAirlock {
+        int $limit = 1,
+        int $ttl = 10,
+        int $claimWindow = 5,
+    ): EventDispatchingAirlock {
         $seal = new SymfonySemaphoreSeal(
             factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
             resource: RedisLotteryQueue::RESOURCE->value,
@@ -177,6 +184,13 @@ class AirlockFactory
         $jwtSecret = getenv('MERCURE_JWT_SECRET') ?: 'airlock-mercure-secret-32chars-minimum';
         $hub = SymfonyMercureHubFactory::create($hubUrl, $jwtSecret);
 
-        return new QueueAirlock($seal, $queue, new MercureAirlockNotifier($hub));
+        return new EventDispatchingAirlock(
+            new LoggingAirlock(
+                new QueueAirlock($seal, $queue, new MercureAirlockNotifier($hub)),
+                $this->logger
+            ),
+            $this->dispatcher,
+            RedisLotteryQueue::NAME->value,
+        );
     }
 }

@@ -21,7 +21,8 @@
     ],
     "require": {
         "php": "^8.4",
-        "ext-redis": "*"
+        "ext-redis": "*",
+        "psr/log": "^3.0"
     },
     "require-dev": {
         "ext-memcached": "*",
@@ -32,6 +33,7 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpunit/phpunit": "^13.0",
+        "psr/event-dispatcher": "^1.0",
         "react/async": "^4.3",
         "react/event-loop": "^1.6",
         "react/promise": "^3.3",
@@ -47,6 +49,7 @@
         "testcontainers/testcontainers": "^1.0"
     },
     "suggest": {
+        "psr/event-dispatcher": "Required to use the EventDispatchingAirlock decorator.",
         "symfony/lock": "Recommended Lock implementation",
         "symfony/semaphore": "Recommended Semaphore implementation",
         "symfony/mercure": "Required to use the MercureAirlockNotifier."

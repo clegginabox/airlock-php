@@ -23,9 +23,17 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
         document.getElementById('slot-0'),
     ];
 
+    const eventLog = document.getElementById('event-log');
+    const chamber = document.getElementById('chamber');
+    const queueCount = document.getElementById('queue-count');
+    const queueCountValue = document.getElementById('queue-count-value');
+
     let eventSource = null;
     let occupied = 0;
     let userSlot = -1;
+    let userState = 'idle'; // idle | queued | admitted
+    let liveOccupant = null;
+    let queueDepth = 0;
 
     // --- Visual helpers ---
 
@@ -98,6 +106,70 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
             '</div>';
     }
 
+    // --- Live chamber (driven by event log) ---
+
+    function extractName(html) {
+        var m = html.match(/<strong>([^<]+)<\/strong>/);
+        return m ? m[1] : null;
+    }
+
+    function flashChamber() {
+        chamber.classList.remove('chamber-flash');
+        void chamber.offsetWidth; // reflow to restart animation
+        chamber.classList.add('chamber-flash');
+    }
+
+    function setLiveSlot(name) {
+        var slot = slots[0];
+        slot.className = 'slot live';
+        slot.textContent = name;
+        liveOccupant = name;
+        updateBarrier(true);
+        flashChamber();
+    }
+
+    function clearLiveSlot() {
+        var slot = slots[0];
+        slot.className = 'slot exiting';
+        liveOccupant = null;
+        setTimeout(function () {
+            // Only reset if nothing else claimed the slot during the exit animation
+            if (!liveOccupant && userState !== 'admitted') {
+                slot.className = 'slot';
+                slot.textContent = 'Empty';
+                updateBarrier(false);
+            }
+        }, 300);
+    }
+
+    function updateQueueDepth(delta) {
+        queueDepth = Math.max(0, queueDepth + delta);
+        queueCountValue.textContent = queueDepth;
+        if (queueDepth > 0) {
+            queueCount.classList.remove('hidden');
+        } else {
+            queueCount.classList.add('hidden');
+        }
+    }
+
+    eventLog.addEventListener('airlock-log-entry', function (e) {
+        var text = e.detail.text;
+
+        // Don't override the user's own "You" slot
+        if (userState === 'admitted') return;
+
+        if (text.includes('entered the airlock')) {
+            setLiveSlot(extractName(text) || '?');
+            updateQueueDepth(-1);
+        } else if (text.includes('joined the queue')) {
+            updateQueueDepth(1);
+        } else if (text.includes('left the queue')) {
+            updateQueueDepth(-1);
+        } else if (text.includes('lock released')) {
+            clearLiveSlot();
+        }
+    });
+
     // --- Actions ---
 
     goBtn.addEventListener('click', async function () {
@@ -123,6 +195,7 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
 
             if (data.status === 'admitted') {
                 // Got in immediately
+                userState = 'admitted';
                 userSlot = data.position !== undefined ? data.position : occupied;
                 updateSlots(Math.min(occupied + 1, CAPACITY), true);
                 updateBarrier(occupied >= CAPACITY);
@@ -133,6 +206,7 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
                 }, REDIRECT_DELAY);
             } else if (data.status === 'queued') {
                 // Queued — wait for Mercure notification
+                userState = 'queued';
                 var pos = data.position || '?';
                 updateSlots(CAPACITY, false);
                 updateBarrier(true);
@@ -170,6 +244,7 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
                                 var claimData = await claimRes.json();
 
                                 if (claimData.ok && claimData.status === 'admitted') {
+                                    userState = 'admitted';
                                     hideQueue();
                                     userSlot = 0;
                                     updateSlots(Math.min(CAPACITY, occupied), true);
@@ -223,10 +298,16 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
         setStatus('');
         positionDiv.innerHTML = '';
         userSlot = -1;
+        userState = 'idle';
+        liveOccupant = null;
+        queueDepth = 0;
         occupied = 0;
         updateSlots(0, false);
         updateBarrier(false);
         hideQueue();
+        queueCount.classList.add('hidden');
+        queueCountValue.textContent = '0';
+        eventLog.clear();
         setStatusLabel('Idle', '');
         statusLabel.className = 'mt-2 text-2xl font-black text-base-content/30';
 

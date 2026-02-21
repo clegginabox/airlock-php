@@ -15,19 +15,33 @@
     0%, 100% { opacity: 0.7; }
     50% { opacity: 1; }
 }
+@keyframes slot-enter {
+    0%  { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+}
+@keyframes slot-exit {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.4); opacity: 0; }
+}
+@keyframes chamber-flash {
+    0%   { border-color: oklch(from var(--color-base-content) l c h / 0.1); }
+    30%  { border-color: oklch(from var(--color-success) l c h / 0.6); }
+    100% { border-color: oklch(from var(--color-base-content) l c h / 0.1); }
+}
 
 /* Slot circles */
 .slot {
-    width: 72px;
-    height: 72px;
+    width: 176px;
+    height: 176px;
     border-radius: 50%;
-    border: 2.5px dashed oklch(from var(--color-base-content) l c h / 0.2);
+    border: 3px dashed oklch(from var(--color-base-content) l c h / 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
-    font-size: 0.75rem;
+    font-size: 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -44,6 +58,24 @@
     color: var(--color-accent);
     background: oklch(from var(--color-accent) l c h / 0.12);
     animation: slot-glow 2s ease-in-out infinite;
+}
+.slot.live {
+    border: 2.5px solid var(--color-info);
+    color: var(--color-info);
+    background: oklch(from var(--color-info) l c h / 0.1);
+    animation: slot-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               lq-slot-pulse 2.5s ease-in-out 0.4s infinite;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+.slot.exiting {
+    animation: slot-exit 0.3s ease-in forwards;
+}
+
+/* Chamber card flash on state change */
+.chamber-flash {
+    animation: chamber-flash 0.8s ease-out;
 }
 
 /* Barrier line */
@@ -91,9 +123,9 @@
 /* Mobile slots */
 @media (max-width: 640px) {
     .slot {
-        width: 56px;
-        height: 56px;
-        font-size: 0.65rem;
+        width: 120px;
+        height: 120px;
+        font-size: 0.85rem;
     }
     .queue-badge {
         width: 30px;

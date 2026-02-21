@@ -18,9 +18,9 @@ final class TrafficControlService
 {
     /**
      * Compresses real-world workflow timing to keep demos responsive
-     * while preserving heavy-tail behavior.
+     * while preserving heavy-tail behaviour
      */
-    private const SIMULATION_TIME_SCALE = 0.6;
+    private const float SIMULATION_TIME_SCALE = 0.6;
 
     /** @var string[] */
     private array $providers = ['alpha', 'beta', 'gamma'];
