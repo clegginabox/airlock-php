@@ -336,39 +336,41 @@ import { AirlockClient } from '../../../../resources/js/airlock-client.js';
         }
     });
 
-    resetBtn.addEventListener('click', async function () {
-        resetBtn.disabled = true;
-        resetBtn.classList.add('btn-disabled');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', async function () {
+            resetBtn.disabled = true;
+            resetBtn.classList.add('btn-disabled');
 
-        airlockClient.reset();
+            airlockClient.reset();
 
-        try {
-            await fetch('/reset', { method: 'GET' });
-        } catch (e) {
-            // ignore
-        }
+            try {
+                await fetch('/reset', { method: 'GET' });
+            } catch (e) {
+                // ignore
+            }
 
-        // Reset visuals
-        setStatus('');
-        positionDiv.innerHTML = '';
-        userSlot = -1;
-        userState = 'idle';
-        liveOccupant = null;
-        queueDepth = 0;
-        latestClaimNonce = null;
-        occupied = 0;
-        updateSlots(0, false);
-        updateBarrier(false);
-        hideQueue();
-        queueCount.classList.add('hidden');
-        queueCountValue.textContent = '0';
-        eventLog.clear();
-        setStatusLabel('Idle', '');
-        statusLabel.className = 'mt-2 text-2xl font-black text-base-content/30';
+            // Reset visuals
+            setStatus('');
+            positionDiv.innerHTML = '';
+            userSlot = -1;
+            userState = 'idle';
+            liveOccupant = null;
+            queueDepth = 0;
+            latestClaimNonce = null;
+            occupied = 0;
+            updateSlots(0, false);
+            updateBarrier(false);
+            hideQueue();
+            queueCount.classList.add('hidden');
+            queueCountValue.textContent = '0';
+            eventLog.clear();
+            setStatusLabel('Idle', '');
+            statusLabel.className = 'mt-2 text-2xl font-black text-base-content/30';
 
-        goBtn.disabled = false;
-        goBtn.classList.remove('btn-disabled');
-        resetBtn.disabled = false;
-        resetBtn.classList.remove('btn-disabled');
-    });
+            goBtn.disabled = false;
+            goBtn.classList.remove('btn-disabled');
+            resetBtn.disabled = false;
+            resetBtn.classList.remove('btn-disabled');
+        });
+    }
 })();
