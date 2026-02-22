@@ -3,6 +3,7 @@
  *
  * Subscribes to a global Mercure topic and emits:
  * - airlock-queue-state: { queueSize, position, userState, candidateId, source }
+ * - mode attribute: lottery (default) | fifo
  *
  * Optional:
  * - bindClient(client): bind an AirlockClient instance for richer own-state updates.
@@ -10,7 +11,7 @@
  */
 class AirlockQueueState extends HTMLElement {
     static get observedAttributes() {
-        return ['hub-url', 'topic', 'token', 'client-id', 'render'];
+        return ['hub-url', 'topic', 'token', 'client-id', 'mode', 'render'];
     }
 
     constructor() {
@@ -49,6 +50,12 @@ class AirlockQueueState extends HTMLElement {
         }
 
         if (name === 'client-id') {
+            this._recomputePosition();
+            this._emitState('attr');
+            return;
+        }
+
+        if (name === 'mode') {
             this._recomputePosition();
             this._emitState('attr');
             return;
@@ -177,12 +184,16 @@ class AirlockQueueState extends HTMLElement {
 
         const identifier = typeof data.identifier === 'string' ? data.identifier : null;
         const clientId = this.getAttribute('client-id');
+        const mode = this._mode();
 
         switch (data.event) {
             case 'entry_queued':
                 this._state.queueSize += 1;
                 if (identifier !== null && identifier === clientId) {
                     this._state.userState = 'queued';
+                    if (Number.isInteger(data.position) && data.position > 0) {
+                        this._state.position = data.position;
+                    }
                 }
                 break;
             case 'entry_admitted':
@@ -191,6 +202,13 @@ class AirlockQueueState extends HTMLElement {
                 if (identifier !== null && identifier === clientId) {
                     this._state.userState = 'admitted';
                     this._state.position = null;
+                } else if (
+                    mode === 'fifo'
+                    && this._state.userState === 'queued'
+                    && Number.isInteger(this._state.position)
+                    && this._state.position > 1
+                ) {
+                    this._state.position -= 1;
                 }
                 break;
             case 'user_left':
@@ -198,6 +216,13 @@ class AirlockQueueState extends HTMLElement {
                 if (identifier !== null && identifier === clientId) {
                     this._state.userState = 'idle';
                     this._state.position = null;
+                } else if (
+                    mode === 'fifo'
+                    && this._state.userState === 'queued'
+                    && Number.isInteger(this._state.position)
+                    && this._state.position > 1
+                ) {
+                    this._state.position -= 1;
                 }
                 break;
             case 'lock_released':
@@ -217,6 +242,18 @@ class AirlockQueueState extends HTMLElement {
             return;
         }
 
+        if (this._mode() === 'fifo') {
+            if (Number.isInteger(this._state.position) && this._state.position > 0) {
+                return;
+            }
+
+            this._state.position = this._state.queueSize > 0
+                ? Math.max(1, this._state.queueSize)
+                : 1;
+
+            return;
+        }
+
         const clientId = this.getAttribute('client-id');
         if (clientId !== null && this._state.candidateId === clientId) {
             this._state.position = 1;
@@ -226,6 +263,10 @@ class AirlockQueueState extends HTMLElement {
         // Lottery queue position approximation:
         // position is effectively "how many waiting users are in the pool".
         this._state.position = Math.max(1, this._state.queueSize);
+    }
+
+    _mode() {
+        return this.getAttribute('mode') === 'fifo' ? 'fifo' : 'lottery';
     }
 
     _emitState(source) {

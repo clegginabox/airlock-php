@@ -32,6 +32,7 @@ class EntryQueuedListener
                 data: json_encode([
                     'identifier' => $event->identifier,
                     'event'      => 'entry_queued',
+                    'position'   => $event->position,
                 ], JSON_THROW_ON_ERROR),
             )
         );

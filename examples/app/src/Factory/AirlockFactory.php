@@ -6,6 +6,7 @@ namespace App\Factory;
 
 use App\Decorator\MetricsAirlock;
 use App\Examples\GlobalLock\GlobalLock;
+use App\Examples\RedisFifoQueue\RedisFifoQueue;
 use App\Examples\RedisLotteryQueue\RedisLotteryQueue;
 use App\Examples\TrafficControl\TrafficControl;
 use Clegginabox\Airlock\Airlock;
@@ -15,7 +16,9 @@ use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Decorator\EventDispatchingAirlock;
 use Clegginabox\Airlock\Decorator\LoggingAirlock;
 use Clegginabox\Airlock\OpportunisticAirlock;
+use Clegginabox\Airlock\Queue\FifoQueue;
 use Clegginabox\Airlock\Queue\LotteryQueue;
+use Clegginabox\Airlock\Queue\Storage\Fifo\RedisFifoQueueStore;
 use Clegginabox\Airlock\Queue\Storage\Lottery\RedisLotteryQueueStore;
 use Clegginabox\Airlock\QueueAirlock;
 use Clegginabox\Airlock\RateLimitingAirlock;
@@ -221,6 +224,54 @@ class AirlockFactory
             $metricsDecorator,
             $this->dispatcher,
             RedisLotteryQueue::NAME->value,
+        );
+    }
+
+    public function redisFifoQueue(): QueueAirlock
+    {
+        $seal = new SymfonySemaphoreSeal(
+            factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
+            resource: RedisLotteryQueue::RESOURCE->value,
+            limit: 3,
+            weight: 1,
+            ttlInSeconds: 60,
+            autoRelease: false,
+        );
+
+        $queue = new FifoQueue(
+            new RedisFifoQueueStore(
+                redis: $this->redis,
+                listKey: RedisFifoQueue::LIST_KEY->value,
+                setKey: RedisFifoQueue::SET_KEY->value,
+            )
+        );
+
+        $reservations = new RedisReservationStore(
+            redis: $this->redis,
+            keyPrefix: RedisFifoQueue::RESERVATION_KEY_PREFIX->value,
+        );
+
+        return new QueueAirlock(
+            seal: $seal,
+            queue: $queue,
+            topicPrefix: RedisFifoQueue::NAME->value,
+            reservations: $reservations,
+        );
+    }
+
+    public function redisFifoQueueWithMercure(): EventDispatchingAirlock
+    {
+        $airlock = $this->redisFifoQueue();
+
+        $loggingDecorator = new LoggingAirlock(
+            inner: $airlock,
+            logger: $this->logger,
+        );
+
+        return new EventDispatchingAirlock(
+            inner: $loggingDecorator,
+            dispatcher: $this->dispatcher,
+            airlockIdentifier: RedisFifoQueue::NAME->value,
         );
     }
 }

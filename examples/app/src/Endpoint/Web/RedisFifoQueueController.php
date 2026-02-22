@@ -1,0 +1,142 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Endpoint\Web;
+
+use App\Examples\RedisFifoQueue\RedisFifoQueue;
+use App\Examples\RedisFifoQueue\RedisFifoQueueService;
+use Psr\Http\Message\ServerRequestInterface;
+use Spiral\Prototype\Traits\PrototypeTrait;
+use Spiral\Router\Annotation\Route;
+use Spiral\Session\SessionInterface;
+
+class RedisFifoQueueController
+{
+    use PrototypeTrait;
+
+    public function __construct(private readonly RedisFifoQueueService $service)
+    {
+    }
+
+    #[Route(route: '/redis-fifo-queue', name: 'redis_fifo_queue_index')]
+    public function index(): string
+    {
+        return $this->views->render('redis-fifo-queue/index', [
+            'hubUrl'      => $this->service->getHubUrl(),
+            'globalToken' => $this->service->getGlobalToken(),
+            'globalTopic' => RedisFifoQueue::NAME->value,
+        ]);
+    }
+
+    #[Route(route: '/redis-fifo-queue/start', name: 'redis_fifo_queue_start')]
+    public function start(ServerRequestInterface $request, SessionInterface $session): array
+    {
+        $clientId = $this->getClientId($request);
+        $session->resume();
+        $queueSession = $session->getSection('fifo-queue');
+
+        $result = $this->service->start($clientId);
+
+        // User is queued
+        if (!$result->isAdmitted()) {
+            return [
+                'ok' => true,
+                'status' => 'queued',
+                'position' => $result->getPosition(),
+                'clientId' => $clientId,
+                'topic' => $this->service->getTopic($clientId),
+                'reservationNonce' => $this->service->getReservationNonce($clientId),
+                'hubUrl' => $this->service->getHubUrl(),
+                'token' => $this->service->getSubscriberToken($clientId),
+            ];
+        }
+
+        // User is admitted — store serialized key for later release, keyed by tab
+        $token = $result->getToken();
+
+        if ($token !== null) {
+            $queueSession->set('token_' . $clientId, (string) $token);
+        }
+
+        return [
+            'ok' => true,
+            'status' => 'admitted',
+            'clientId' => $clientId,
+            'topic' => $this->service->getTopic($clientId),
+            'hubUrl' => $this->service->getHubUrl(),
+            'token' => $this->service->getSubscriberToken($clientId),
+        ];
+    }
+
+    #[Route(route: '/redis-fifo-queue/release', name: 'redis_fifo_queue_release')]
+    public function release(ServerRequestInterface $request, SessionInterface $session): array
+    {
+        $clientId = $this->getClientId($request);
+        $session->resume();
+        $queueSession = $session->getSection('fifo-queue');
+
+        $token = $queueSession->get('token_' . $clientId);
+
+        if ($token !== null) {
+            $this->service->release($token);
+            $queueSession->delete('token_' . $clientId);
+        }
+
+        return [
+            'ok' => true,
+        ];
+    }
+
+    #[Route(route: '/redis-fifo-queue/claim', name: 'redis_fifo_queue_claim')]
+    public function claim(ServerRequestInterface $request, SessionInterface $session): array
+    {
+        $clientId = $this->getClientId($request);
+        $reservationNonce = $request->getHeaderLine('X-Claim-Nonce');
+
+        if ($reservationNonce === '') {
+            return [
+                'ok' => false,
+                'error' => 'missing_claim_nonce',
+            ];
+        }
+
+        $result = $this->service->claim($clientId, $reservationNonce);
+
+        if (!$result->isAdmitted()) {
+            return [
+                'ok' => false,
+                'error' => $result->getStatus(),
+            ];
+        }
+
+        $session->resume();
+        $queueSession = $session->getSection('fifo-queue');
+
+        $token = $result->getToken();
+
+        if ($token !== null) {
+            $queueSession->set('token_' . $clientId, (string) $token);
+        }
+
+        return [
+            'ok' => true,
+            'status' => 'admitted',
+            'clientId' => $clientId,
+            'topic' => $this->service->getTopic($clientId),
+            'hubUrl' => $this->service->getHubUrl(),
+            'token' => $this->service->getSubscriberToken($clientId),
+        ];
+    }
+
+    #[Route(route: '/redis-fifo-queue/success', name: 'redis_fifo_queue_success')]
+    public function success(): string
+    {
+        return $this->views->render('redis-fifo-queue/success');
+    }
+
+    private function getClientId(ServerRequestInterface $request): string
+    {
+        return $request->getHeaderLine('X-Client-Id') ?: 'anonymous';
+    }
+}

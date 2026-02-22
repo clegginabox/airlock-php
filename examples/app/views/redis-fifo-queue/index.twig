@@ -1,6 +1,6 @@
 {% extends "layout/base.twig" %}
 
-{% block title %}Airlock: Lottery Queue{% endblock %}
+{% block title %}Airlock: FIFO Queue{% endblock %}
 
 {% block body %}
     <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
@@ -14,11 +14,10 @@
                         <div class="badge badge-secondary">Mercure</div>
                         <div class="badge badge-accent">Symfony Semaphore</div>
                         <h1 class="text-3xl font-black sm:text-4xl lg:text-5xl">
-                            Lottery Queue
+                            FIFO Queue
                         </h1>
                         <p class="max-w-3xl text-base leading-relaxed text-base-content/70 sm:text-lg">
-                            Enter a contention scenario where access is randomised under load.
-                            Only one user can stay inside at a time. If capacity is full, you join the queue and wait for a random draw.
+                            The proper British queue. Exact arrival order. Deterministic. No cutting, no exceptions.
                         </p>
                     </div>
 
@@ -26,11 +25,11 @@
                     <div class="grid gap-4 sm:grid-cols-3">
                         <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
                             <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Inside Limit</p>
-                            <p class="mt-2 text-2xl font-black text-base-content">1 User</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">3 Users</p>
                         </div>
                         <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
                             <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Draw Cycle</p>
-                            <p class="mt-2 text-2xl font-black text-base-content">~10s</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">~60s</p>
                         </div>
                         <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
                             <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Your Status</p>
@@ -38,13 +37,13 @@
                         </div>
                     </div>
 
-
-
                     {# Airlock chamber visual #}
                     <div id="chamber" class="rounded-2xl border border-base-300 bg-base-100/50 p-6">
                         <p class="mb-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40">Airlock Chamber</p>
-                        <div class="flex items-center justify-center gap- sm:gap-8">
+                        <div class="flex items-center justify-center gap-4 sm:gap-8">
                             <div id="slot-0" class="slot">Empty</div>
+                            <div id="slot-1" class="slot">Empty</div>
+                            <div id="slot-2" class="slot">Empty</div>
                         </div>
                         <div id="barrier" class="barrier open mx-auto mt-5 w-3/4 sm:w-1/2"></div>
                         <p id="barrier-label" class="mt-2 text-center text-xs font-medium text-base-content/30">Open</p>
@@ -62,6 +61,7 @@
                     <airlock-queue-state
                         id="queue-state"
                         class="hidden"
+                        mode="fifo"
                         hub-url="{{ hubUrl }}"
                         topic="{{ globalTopic }}"
                         token="{{ globalToken }}"
@@ -70,13 +70,10 @@
                     {# Action area #}
                     <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm sm:p-5">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                            <button
-                                id="go"
-                                type="button"
-                                class="btn btn-lg btn-primary rounded-full"
-                            >
-                                Join Queue
-                            </button>
+                            <airlock-join-button
+                                id="join"
+                                button-class="btn btn-lg btn-primary rounded-full"
+                            ></airlock-join-button>
                             <button
                                 id="reset"
                                 type="button"
@@ -110,10 +107,19 @@
                         </div>
                         <div class="collapse-content">
                             <pre class="!m-0 rounded-xl"><code class="language-php">
+$seal = new SymfonySemaphoreSeal(
+    factory: new SemaphoreFactory(new SemaphoreRedisStore($redis)),
+    limit: 3,
+    weight: 1,
+    ttlInSeconds: 60,
+    autoRelease: false,
+);
+
 $airlock = new QueueAirlock(
-    seal:     new SymfonySemaphoreSeal(new RedisStore($redis), limit: 1),
-    queue:    new RedisLotteryQueue($redis),
-    notifier: new MercureAirlockNotifier($hub),
+    seal: $seal,
+    queue: new FifoQueue(new RedisFifoQueueStore($redis)),
+    topicPrefix: RedisFifoQueue::NAME->value,
+    reservations: new RedisReservationStore($redis),
 );
 
 $result = $airlock-&gt;enter($userId);
@@ -135,5 +141,5 @@ if ($result-&gt;isAdmitted()) {
     {{ vite('../resources/js/airlock-event-log.js') }}
     {{ vite('../resources/js/airlock-join-button.js') }}
     {{ vite('../resources/js/airlock-queue-state.js') }}
-    {{ vite('resources/js/pages/lottery-queue.js') }}
+    {{ vite('resources/js/pages/fifo-queue.js') }}
 {% endblock %}
