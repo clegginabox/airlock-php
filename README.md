@@ -27,6 +27,6 @@ British-style queuing for your code and infrastructure. First come, first served
 
 ## Documentation
 
-Full documentation, guides and examples at **[airlock.clegginabox.co.uk](https://airlock.clegginabox.co.uk/)**.
+Full documentation, guides and examples at **[clegginabox.github.io/airlock-php](https://clegginabox.github.io/airlock-php/)**.
 
 See the [example app](https://airlock.clegginabox.co.uk/recipes) for real-world usage patterns.
