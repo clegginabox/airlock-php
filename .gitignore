@@ -4,3 +4,5 @@
 .idea/
 .DS_Store
 .phpcs-cache
+docs/.vitepress/dist
+docs/.vitepress/cache
