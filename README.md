@@ -25,8 +25,20 @@ British-style queuing for your code and infrastructure. First come, first served
 > [!CAUTION]
 > **Very Early Work in Progress** - This library is under active development and not yet production-ready. APIs will change, many implementations are stubs and test coverage is incomplete. Use at your own risk, contributions welcome.
 
+## The Core Idea
+
+*Everything has a breaking point.* A database has connection limits. An API has rate limits. A checkout flow falls over if 50,000 people hit it at once. An airlock sits in front of that thing and makes everyone wait their turn nicely.
+
+Every Airlock is composed of:
+- A Seal — how capacity is enforced (the velvet rope)
+- An Admission Strategy — who gets in next (the queue itself)
+- An optional Notifier — how waiters are told it’s their turn (the “your table is ready” buzzer)
+ 
+Swap one piece, get a different system. Same interface, different behaviour. Dead simple.    
+
+
 ## Documentation
 
 Full documentation, guides and examples at **[clegginabox.github.io/airlock-php](https://clegginabox.github.io/airlock-php/)**.
 
-See the [example app](https://airlock.clegginabox.co.uk/recipes) for real-world usage patterns.
+See the [example app](https://airlock.clegginabox.co.uk) for real-world usage patterns.
