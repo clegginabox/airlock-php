@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Factory;
 
-use App\Decorator\MetricsAirlock;
 use App\Examples\GlobalLock\GlobalLock;
 use App\Examples\RedisFifoQueue\RedisFifoQueue;
 use App\Examples\RedisLotteryQueue\RedisLotteryQueue;
@@ -213,15 +212,8 @@ class AirlockFactory
             $this->logger,
         );
 
-        $metricsDecorator = new MetricsAirlock(
-            $loggingDecorator,
-            $this->metrics,
-            RedisLotteryQueue::NAME->value,
-            $this->logger,
-        );
-
         return new EventDispatchingAirlock(
-            $metricsDecorator,
+            $loggingDecorator,
             $this->dispatcher,
             RedisLotteryQueue::NAME->value,
         );
