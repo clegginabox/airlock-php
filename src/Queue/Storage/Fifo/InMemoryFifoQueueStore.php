@@ -53,4 +53,9 @@ class InMemoryFifoQueueStore implements FifoQueueStorage
     {
         $this->queue = [];
     }
+
+    public function all(): array
+    {
+        return $this->queue;
+    }
 }

@@ -12,7 +12,7 @@ use Clegginabox\Airlock\Queue\Storage\Fifo\FifoQueueStorage;
  * This is a thin adapter between QueueInterface and QueueStorageInterface,
  * allowing the queue logic to be decoupled from storage specifics.
  */
-final readonly class FifoQueue implements QueueInterface
+final readonly class FifoQueue implements EnumerableQueue
 {
     public function __construct(
         private FifoQueueStorage $storage,
@@ -42,5 +42,10 @@ final readonly class FifoQueue implements QueueInterface
     public function getPosition(string $identifier): ?int
     {
         return $this->storage->getPosition($identifier);
+    }
+
+    public function all(): array
+    {
+        return $this->storage->all();
     }
 }

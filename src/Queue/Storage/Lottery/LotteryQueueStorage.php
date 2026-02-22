@@ -13,4 +13,9 @@ interface LotteryQueueStorage
     public function peek(): ?string;
 
     public function getPosition(string $identifier): ?int;
+
+    /**
+     * @return list<string>
+     */
+    public function all(): array;
 }

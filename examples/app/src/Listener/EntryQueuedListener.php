@@ -4,21 +4,29 @@ declare(strict_types=1);
 
 namespace App\Listener;
 
-use Clegginabox\Airlock\Bridge\Symfony\Mercure\SymfonyMercureHubFactory;
 use Clegginabox\Airlock\Event\EntryQueuedEvent;
+use Psr\Log\LoggerInterface;
 use Spiral\Events\Attribute\Listener;
+use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 
 #[Listener]
 class EntryQueuedListener
 {
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly HubInterface $hub,
+    ) {
+    }
+
     public function __invoke(EntryQueuedEvent $event): void
     {
-        $hubUrl = getenv('MERCURE_HUB_URL') ?: 'http://localhost/.well-known/mercure';
-        $jwtSecret = getenv('MERCURE_JWT_SECRET') ?: 'airlock-mercure-secret-32chars-minimum';
-        $hub = SymfonyMercureHubFactory::create($hubUrl, $jwtSecret);
+        $this->logger->debug('EntryQueuedListener fired', [
+            'identifier' => $event->identifier,
+            'airlock' => $event->airlock,
+        ]);
 
-        $hub->publish(
+        $this->hub->publish(
             new Update(
                 topics: $event->airlock,
                 data: json_encode([

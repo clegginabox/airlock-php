@@ -37,4 +37,17 @@ class MercureAirlockNotifierTest extends TestCase
         $notifier = new MercureAirlockNotifier($hub);
         $notifier->notify('user-123', 'queue/user-123');
     }
+
+    public function testNotifyIncludesClaimNonceWhenProvided(): void
+    {
+        $hub = $this->createMock(HubInterface::class);
+        $hub->expects($this->once())
+            ->method('publish')
+            ->with($this->callback(function (Update $update): bool {
+                return $update->getData() === '{"event":"your_turn","claimNonce":"nonce-123"}';
+            }));
+
+        $notifier = new MercureAirlockNotifier($hub);
+        $notifier->notify('user-123', 'queue/user-123', 'nonce-123');
+    }
 }

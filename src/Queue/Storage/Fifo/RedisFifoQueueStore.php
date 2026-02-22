@@ -122,4 +122,12 @@ final readonly class RedisFifoQueueStore implements FifoQueueStorage
     {
         return (bool) $this->redis->sIsMember($this->setKey, $identifier);
     }
+
+    /**
+     * @return list<string>
+     */
+    public function all(): array
+    {
+        return array_values($this->redis->sMembers($this->setKey));
+    }
 }

@@ -53,4 +53,11 @@ interface FifoQueueStorage
      * Check if an identifier is currently in the queue.
      */
     public function contains(string $identifier): bool;
+
+    /**
+     * Get all identifiers currently in the queue.
+     *
+     * @return list<string>
+     */
+    public function all(): array;
 }

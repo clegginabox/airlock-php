@@ -17,6 +17,7 @@ export default defineConfig({
                 'lottery-queue': 'resources/js/pages/lottery-queue.js',
                 'lottery-queue-success': 'resources/js/pages/lottery-queue-success.js',
                 'airlock-event-log': '../resources/js/airlock-event-log.js',
+                'airlock-queue-state': '../resources/js/airlock-queue-state.js',
             },
         },
     },

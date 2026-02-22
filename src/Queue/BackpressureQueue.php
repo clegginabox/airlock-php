@@ -6,7 +6,7 @@ namespace Clegginabox\Airlock\Queue;
 
 use Clegginabox\Airlock\HealthCheckerInterface;
 
-class BackpressureQueue implements QueueInterface
+class BackpressureQueue implements EnumerableQueue
 {
     public function __construct(
         private QueueInterface $inner,
@@ -39,5 +39,18 @@ class BackpressureQueue implements QueueInterface
     public function getPosition(string $identifier): ?int
     {
         return $this->inner->getPosition($identifier);
+    }
+
+    public function all(): array
+    {
+        if (!$this->inner instanceof EnumerableQueue) {
+            throw new \LogicException(sprintf(
+                'The inner queue (%s) does not implement %s.',
+                $this->inner::class,
+                EnumerableQueue::class,
+            ));
+        }
+
+        return $this->inner->all();
     }
 }

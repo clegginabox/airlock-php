@@ -11,6 +11,7 @@ use Spiral\Broadcasting\Bootloader\BroadcastingBootloader;
 use Spiral\Cache\Bootloader\CacheBootloader;
 use Spiral\Debug\Bootloader\DumperBootloader;
 use Spiral\DotEnv\Bootloader\DotenvBootloader;
+use Spiral\Events\Bootloader\EventsBootloader;
 use Spiral\League\Event\Bootloader\EventBootloader;
 use Spiral\Monolog\Bootloader\MonologBootloader;
 use Spiral\Nyholm\Bootloader\NyholmBootloader;
@@ -18,6 +19,7 @@ use Spiral\OpenTelemetry\Bootloader\OpenTelemetryBootloader;
 use Spiral\Prototype\Bootloader\PrototypeBootloader;
 use Spiral\Queue\Bootloader\QueueBootloader;
 use Spiral\RoadRunnerBridge\Bootloader as RoadRunnerBridge;
+use Spiral\RoadRunnerBridge\Bootloader\MetricsBootloader;
 use Spiral\Scaffolder\Bootloader\ScaffolderBootloader;
 use Spiral\Tokenizer\Bootloader\TokenizerListenerBootloader;
 use Spiral\Twig\Bootloader\TwigBootloader;
@@ -81,11 +83,14 @@ class Kernel extends \Spiral\Framework\Kernel
             // OTEL
             OpenTelemetryBootloader::class,
 
+            // Metrics
+            MetricsBootloader::class,
+
             // Queue
             QueueBootloader::class,
 
             // Events
-            //EventsBootloader::class,
+            EventsBootloader::class,
             EventBootloader::class,
 
             // Cache
@@ -115,6 +120,7 @@ class Kernel extends \Spiral\Framework\Kernel
     {
         return [
             Bootloader\RedisBootloader::class,
+            Bootloader\MercureBootloader::class,
             Bootloader\ViteBootloader::class,
 
             // Application domain

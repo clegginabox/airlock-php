@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8d8563cf0ee8f0a449d764ea69c1b816",
+    "content-hash": "dab7799481e1522c736b79b790fffd00",
     "packages": [
         {
             "name": "alexkart/curl-builder",
@@ -1143,11 +1143,12 @@
             "dist": {
                 "type": "path",
                 "url": "..",
-                "reference": "091456ad8b6025ad92586abbffc183148afffea7"
+                "reference": "7d8b56d4760b3237694667fe32c74dfadd1308b3"
             },
             "require": {
                 "ext-redis": "*",
-                "php": "^8.4"
+                "php": "^8.4",
+                "psr/log": "^3.0"
             },
             "require-dev": {
                 "ext-memcached": "*",
@@ -1158,6 +1159,7 @@
                 "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpunit/phpunit": "^13.0",
+                "psr/event-dispatcher": "^1.0",
                 "react/async": "^4.3",
                 "react/event-loop": "^1.6",
                 "react/promise": "^3.3",
@@ -1173,6 +1175,7 @@
                 "testcontainers/testcontainers": "^1.0"
             },
             "suggest": {
+                "psr/event-dispatcher": "Required to use the EventDispatchingAirlock decorator.",
                 "symfony/lock": "Recommended Lock implementation",
                 "symfony/mercure": "Required to use the MercureAirlockNotifier.",
                 "symfony/semaphore": "Recommended Semaphore implementation"

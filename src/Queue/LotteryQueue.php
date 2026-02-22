@@ -6,7 +6,7 @@ namespace Clegginabox\Airlock\Queue;
 
 use Clegginabox\Airlock\Queue\Storage\Lottery\LotteryQueueStorage;
 
-class LotteryQueue implements QueueInterface
+class LotteryQueue implements EnumerableQueue
 {
     public function __construct(private LotteryQueueStorage $storage)
     {
@@ -30,5 +30,10 @@ class LotteryQueue implements QueueInterface
     public function getPosition(string $identifier): ?int
     {
         return $this->storage->getPosition($identifier);
+    }
+
+    public function all(): array
+    {
+        return $this->storage->all();
     }
 }

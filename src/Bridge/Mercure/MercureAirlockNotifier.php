@@ -14,12 +14,18 @@ class MercureAirlockNotifier implements AirlockNotifierInterface
     {
     }
 
-    public function notify(string $identifier, string $topic): void
+    public function notify(string $identifier, string $topic, ?string $claimNonce = null): void
     {
+        $payload = ['event' => 'your_turn'];
+
+        if ($claimNonce !== null) {
+            $payload['claimNonce'] = $claimNonce;
+        }
+
         $this->hub->publish(
             new Update(
                 topics: $topic,
-                data: json_encode(['event' => 'your_turn'], JSON_THROW_ON_ERROR),
+                data: json_encode($payload, JSON_THROW_ON_ERROR),
             )
         );
     }

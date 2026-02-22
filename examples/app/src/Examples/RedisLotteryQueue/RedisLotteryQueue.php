@@ -11,4 +11,5 @@ enum RedisLotteryQueue: string
     case QUEUE_KEY = 'airlock:examples:lottery:queue';
     case SET_KEY = 'airlock:examples:lottery:pool';
     case CANDIDATE_KEY = 'airlock:examples:lottery:candidate';
+    case RESERVATION_KEY_PREFIX = 'airlock:examples:lottery:reservation';
 }

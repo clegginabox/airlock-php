@@ -2,54 +2,45 @@
 
 declare(strict_types=1);
 
-namespace Clegginabox\Airlock\Decorator;
+namespace App\Decorator;
 
 use Clegginabox\Airlock\Airlock;
 use Clegginabox\Airlock\ClaimingAirlock;
 use Clegginabox\Airlock\ClaimResult;
 use Clegginabox\Airlock\EntryResult;
-use Clegginabox\Airlock\Event\EntryAdmittedEvent;
-use Clegginabox\Airlock\Event\EntryQueuedEvent;
-use Clegginabox\Airlock\Event\LeaseRefreshedEvent;
-use Clegginabox\Airlock\Event\LockReleasedEvent;
-use Clegginabox\Airlock\Event\UserLeftEvent;
 use Clegginabox\Airlock\RefreshingAirlock;
 use Clegginabox\Airlock\ReleasingAirlock;
 use Clegginabox\Airlock\Seal\SealToken;
-use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Spiral\RoadRunner\Metrics\MetricsInterface;
 
-final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirlock, RefreshingAirlock, ClaimingAirlock
+final readonly class MetricsAirlock implements Airlock, ReleasingAirlock, RefreshingAirlock, ClaimingAirlock
 {
+    private LoggerInterface $logger;
+
     public function __construct(
         private Airlock $inner,
-        private EventDispatcherInterface $dispatcher,
-        private string $airlockIdentifier = 'default'
+        private MetricsInterface $metrics,
+        private string $airlockIdentifier = 'default',
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function enter(string $identifier, int $priority = 0): EntryResult
     {
+        $start = hrtime(true);
+
         $result = $this->inner->enter($identifier, $priority);
 
-        if ($result->isAdmitted()) {
-            /** @var SealToken $token */
-            $token = $result->getToken();
-            $this->dispatcher->dispatch(new EntryAdmittedEvent(
-                $this->airlockIdentifier,
-                $identifier,
-                $token,
-                $result->getTopic(),
-            ));
-        } else {
-            /** @var int $position */
-            $position = $result->getPosition();
-            $this->dispatcher->dispatch(new EntryQueuedEvent(
-                $this->airlockIdentifier,
-                $identifier,
-                $position,
-                $result->getTopic(),
-            ));
-        }
+        $this->recordSafely(function () use ($start, $result): void {
+            $durationSeconds = (hrtime(true) - $start) / 1e9;
+            $this->metrics->observe('airlock_entry_duration_seconds', $durationSeconds, [$this->airlockIdentifier]);
+
+            $resultLabel = $result->isAdmitted() ? 'admitted' : 'queued';
+            $this->metrics->add('airlock_entries_total', 1, [$this->airlockIdentifier, $resultLabel]);
+        });
 
         return $result;
     }
@@ -58,7 +49,9 @@ final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirloc
     {
         $this->inner->leave($identifier);
 
-        $this->dispatcher->dispatch(new UserLeftEvent($this->airlockIdentifier, $identifier));
+        $this->recordSafely(function (): void {
+            $this->metrics->add('airlock_leaves_total', 1, [$this->airlockIdentifier]);
+        });
     }
 
     public function release(SealToken $token): void
@@ -73,7 +66,9 @@ final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirloc
 
         $this->inner->release($token);
 
-        $this->dispatcher->dispatch(new LockReleasedEvent($this->airlockIdentifier, $token));
+        $this->recordSafely(function (): void {
+            $this->metrics->add('airlock_releases_total', 1, [$this->airlockIdentifier]);
+        });
     }
 
     public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken
@@ -88,9 +83,31 @@ final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirloc
 
         $newToken = $this->inner->refresh($token, $ttlInSeconds);
 
-        $this->dispatcher->dispatch(new LeaseRefreshedEvent($this->airlockIdentifier, $token, $newToken, $ttlInSeconds));
+        $this->recordSafely(function () use ($newToken): void {
+            $resultLabel = $newToken !== null ? 'refreshed' : 'expired';
+            $this->metrics->add('airlock_refreshes_total', 1, [$this->airlockIdentifier, $resultLabel]);
+        });
 
         return $newToken;
+    }
+
+    /**
+     * Record metrics without breaking the functional chain.
+     *
+     * Metrics are observational — a failure to record should never
+     * prevent the airlock from functioning (e.g. when RoadRunner
+     * RPC is unavailable in a CLI worker context).
+     */
+    private function recordSafely(callable $record): void
+    {
+        try {
+            $record();
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to record airlock metric', [
+                'airlock' => $this->airlockIdentifier,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function getPosition(string $identifier): ?int
@@ -115,18 +132,9 @@ final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirloc
 
         $result = $this->inner->claim($identifier, $reservationNonce);
 
-        if (!$result->isAdmitted()) {
-            return $result;
-        }
-
-        /** @var SealToken $token */
-        $token = $result->getToken();
-        $this->dispatcher->dispatch(new EntryAdmittedEvent(
-            $this->airlockIdentifier,
-            $identifier,
-            $token,
-            $result->getTopic(),
-        ));
+        $this->recordSafely(function () use ($result): void {
+            $this->metrics->add('airlock_claims_total', 1, [$this->airlockIdentifier, $result->getStatus()]);
+        });
 
         return $result;
     }
