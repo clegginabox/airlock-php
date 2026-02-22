@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base: '/airlock-php/',
   title: "Airlock",
   description: "British-style queuing for your infrastructure.",
   themeConfig: {
