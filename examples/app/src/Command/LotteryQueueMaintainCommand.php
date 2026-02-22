@@ -73,7 +73,7 @@ class LotteryQueueMaintainCommand extends Command
 
                 foreach ($result->evicted as $evicted) {
                     $this->writeln(sprintf(
-                        '<comment>[supervisor][%s]</comment> Evicted <info>%s</info> — notified but never claimed',
+                        '<comment>[supervisor][lottery][%s]</comment> Evicted <info>%s</info> — notified but never claimed',
                         new DateTimeImmutable()->format('Y-m-d H:i:s'),
                         $evicted,
                     ));
@@ -84,7 +84,7 @@ class LotteryQueueMaintainCommand extends Command
                 }
 
                 $this->writeln(sprintf(
-                    '<comment>[supervisor][%s]</comment> Notifying candidate <info>%s</info>',
+                    '<comment>[supervisor][lottery][%s]</comment> Notifying candidate <info>%s</info>',
                     new DateTimeImmutable()->format('Y-m-d H:i:s'),
                     $result->notified,
                 ));

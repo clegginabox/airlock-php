@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Examples\RedisFifoQueue;
 
-use App\Examples\RedisLotteryQueue\RedisLotteryQueue;
 use App\Factory\AirlockFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreToken;
 use Clegginabox\Airlock\ClaimResult;
@@ -75,6 +74,6 @@ final class RedisFifoQueueService
         $jwtSecret = getenv('MERCURE_JWT_SECRET') ?: 'airlock-mercure-secret-32chars-minimum';
 
         return new LcobucciFactory($jwtSecret)
-            ->create(subscribe: [RedisLotteryQueue::NAME->value]);
+            ->create(subscribe: [RedisFifoQueue::NAME->value]);
     }
 }

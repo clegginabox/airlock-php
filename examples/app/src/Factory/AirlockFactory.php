@@ -223,7 +223,7 @@ class AirlockFactory
     {
         $seal = new SymfonySemaphoreSeal(
             factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
-            resource: RedisLotteryQueue::RESOURCE->value,
+            resource: RedisFifoQueue::RESOURCE->value,
             limit: 3,
             weight: 1,
             ttlInSeconds: 60,
