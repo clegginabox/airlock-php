@@ -21,6 +21,7 @@ use Spiral\Queue\Bootloader\QueueBootloader;
 use Spiral\RoadRunnerBridge\Bootloader as RoadRunnerBridge;
 use Spiral\RoadRunnerBridge\Bootloader\MetricsBootloader;
 use Spiral\Scaffolder\Bootloader\ScaffolderBootloader;
+use Spiral\Sentry\Bootloader\SentryReporterBootloader;
 use Spiral\Tokenizer\Bootloader\TokenizerListenerBootloader;
 use Spiral\Twig\Bootloader\TwigBootloader;
 use Spiral\Views\Bootloader\ViewsBootloader;
@@ -82,6 +83,9 @@ class Kernel extends \Spiral\Framework\Kernel
 
             // OTEL
             OpenTelemetryBootloader::class,
+
+            // Sentry
+            SentryReporterBootloader::class,
 
             // Metrics
             MetricsBootloader::class,

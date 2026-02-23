@@ -28,6 +28,7 @@
         "spiral/roadrunner-bridge": "^4.0",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-metrics": "^3.3",
+        "spiral/sentry-bridge": "^2.5",
         "spiral/twig-bridge": "^2.0.1",
         "symfony/cache": "^8.0",
         "symfony/lock": "^8.0",
