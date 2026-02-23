@@ -25,6 +25,7 @@ use Spiral\Sentry\Bootloader\SentryReporterBootloader;
 use Spiral\Tokenizer\Bootloader\TokenizerListenerBootloader;
 use Spiral\Twig\Bootloader\TwigBootloader;
 use Spiral\Views\Bootloader\ViewsBootloader;
+use Spiral\YiiErrorHandler\Bootloader\YiiErrorHandlerBootloader;
 
 /**
  * @psalm-suppress ClassMustBeFinal
@@ -49,6 +50,7 @@ class Kernel extends \Spiral\Framework\Kernel
         return [
             // Logging and exceptions handling
             MonologBootloader::class,
+            YiiErrorHandlerBootloader::class,
             Bootloader\ExceptionHandlerBootloader::class,
 
             // Application specific logs
