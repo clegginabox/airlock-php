@@ -46,6 +46,7 @@ class RedisLotteryQueueController
                 'position' => $result->getPosition(),
                 'clientId' => $clientId,
                 'topic' => $this->service->getTopic($clientId),
+                'reservationNonce' => $this->service->getReservationNonce($clientId),
                 'hubUrl' => $this->service->getHubUrl(),
                 'token' => $this->service->getSubscriberToken($clientId),
             ];
@@ -84,6 +85,47 @@ class RedisLotteryQueueController
 
         return [
             'ok' => true,
+        ];
+    }
+
+    #[Route(route: '/redis-lottery-queue/claim', name: 'redis_lottery_queue_claim')]
+    public function claim(ServerRequestInterface $request, SessionInterface $session): array
+    {
+        $clientId = $this->getClientId($request);
+        $reservationNonce = $request->getHeaderLine('X-Claim-Nonce');
+
+        if ($reservationNonce === '') {
+            return [
+                'ok' => false,
+                'error' => 'missing_claim_nonce',
+            ];
+        }
+
+        $result = $this->service->claim($clientId, $reservationNonce);
+
+        if (!$result->isAdmitted()) {
+            return [
+                'ok' => false,
+                'error' => $result->getStatus(),
+            ];
+        }
+
+        $session->resume();
+        $queueSession = $session->getSection('queue');
+
+        $token = $result->getToken();
+
+        if ($token !== null) {
+            $queueSession->set('token_' . $clientId, (string) $token);
+        }
+
+        return [
+            'ok' => true,
+            'status' => 'admitted',
+            'clientId' => $clientId,
+            'topic' => $this->service->getTopic($clientId),
+            'hubUrl' => $this->service->getHubUrl(),
+            'token' => $this->service->getSubscriberToken($clientId),
         ];
     }
 

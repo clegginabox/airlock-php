@@ -1,4 +1,5 @@
 import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
+import { AirlockClient } from '../../../../resources/js/airlock-client.js';
 
 (function () {
     // Per-tab identity — sessionStorage is isolated per tab
@@ -24,16 +25,25 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
     ];
 
     const eventLog = document.getElementById('event-log');
+    const queueState = document.getElementById('queue-state');
     const chamber = document.getElementById('chamber');
     const queueCount = document.getElementById('queue-count');
     const queueCountValue = document.getElementById('queue-count-value');
 
-    let eventSource = null;
+    const airlockClient = new AirlockClient({
+        clientId: CLIENT_ID,
+        startUrl: '/redis-lottery-queue/start',
+        claimUrl: '/redis-lottery-queue/claim',
+        releaseUrl: '/redis-lottery-queue/release',
+    });
+
     let occupied = 0;
     let userSlot = -1;
-    let userState = 'idle'; // idle | queued | admitted
+    let userState = 'idle'; // idle | queued | claiming | admitted
     let liveOccupant = null;
     let queueDepth = 0;
+    let latestClaimNonce = null;
+    let isClaiming = false;
 
     // --- Visual helpers ---
 
@@ -143,6 +153,7 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
     }
 
     function updateQueueDepth(delta) {
+        return;
 /*        queueDepth = Math.max(0, queueDepth + delta);
         queueCountValue.textContent = queueDepth;
         if (queueDepth > 0) {
@@ -153,7 +164,7 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
     }
 
     eventLog.addEventListener('airlock-log-entry', function (e) {
-        var text = e.detail.text;
+        const text = e.detail.text;
 
         // Don't override the user's own "You" slot
         if (userState === 'admitted') return;
@@ -170,7 +181,105 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
         }
     });
 
+    if (queueState) {
+        queueState.setAttribute('client-id', CLIENT_ID);
+
+        if (typeof queueState.bindClient === 'function') {
+            queueState.bindClient(airlockClient);
+        }
+
+        queueState.addEventListener('airlock-queue-state', function (e) {
+            const detail = e.detail || {};
+
+            if (userState !== 'queued') {
+                return;
+            }
+
+            if (!Number.isInteger(detail.position)) {
+                return;
+            }
+
+            const position = detail.position;
+            const queueSize = Number.isInteger(detail.queueSize) ? detail.queueSize : position;
+            const total = Math.max(1, queueSize, position);
+
+            showQueue(position, total);
+            setStatusLabel('Queued #' + position, 'text-warning');
+            positionDiv.innerHTML = '<p class="mt-3 text-sm text-base-content/50">Position: <strong class="text-base-content">' + position + '</strong></p>';
+        });
+    }
+
+    airlockClient.addEventListener('turn', async function (event) {
+        if (userState !== 'queued') {
+            return;
+        }
+
+        latestClaimNonce = event.detail?.claimNonce || null;
+        await claimReservation(latestClaimNonce);
+    });
+
     // --- Actions ---
+
+    async function claimReservation(claimNonce) {
+        if (isClaiming) {
+            return false;
+        }
+
+        if (!claimNonce) {
+            setStatus(alertHtml('warning', warnIcon, 'Turn notice arrived without a claim nonce. Waiting for next turn...'));
+            setStatusLabel('Queued', 'text-warning');
+            return false;
+        }
+
+        isClaiming = true;
+        userState = 'claiming';
+        setStatus(alertHtml('info', spinnerIcon, 'Your turn! Claiming slot...'));
+        setStatusLabel('Claiming...', 'text-info');
+
+        try {
+            const claimData = await airlockClient.claim(claimNonce);
+
+            if (claimData.ok && claimData.status === 'admitted') {
+                userState = 'admitted';
+                hideQueue();
+                userSlot = 0;
+                updateSlots(Math.min(CAPACITY, occupied), true);
+                setStatus(alertHtml('success', checkIcon, 'Your turn! Redirecting...'));
+                setStatusLabel('Inside', 'text-success');
+                positionDiv.innerHTML = '';
+                setTimeout(function () {
+                    window.location.href = '/redis-lottery-queue/success';
+                }, REDIRECT_DELAY);
+
+                return true;
+            }
+
+            userState = 'queued';
+
+            if (claimData.error === 'missed') {
+                setStatus(alertHtml('warning', warnIcon, 'Claim window expired. Waiting for next turn...'));
+                setStatusLabel('Queued', 'text-warning');
+                return false;
+            }
+
+            if (claimData.error === 'unavailable') {
+                setStatus(alertHtml('warning', spinnerIcon, 'Slot not ready yet. Waiting for next turn...'));
+                setStatusLabel('Queued', 'text-warning');
+                return false;
+            }
+
+            setStatus(alertHtml('warning', warnIcon, 'Claim rejected. Waiting for next turn...'));
+            setStatusLabel('Queued', 'text-warning');
+            return false;
+        } catch (err) {
+            userState = 'queued';
+            setStatus(alertHtml('error', errorIcon, 'Failed to claim slot'));
+            setStatusLabel('Error', 'text-error');
+            return false;
+        } finally {
+            isClaiming = false;
+        }
+    }
 
     goBtn.addEventListener('click', async function () {
         goBtn.disabled = true;
@@ -179,11 +288,7 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
         setStatusLabel('Joining...', 'text-info');
 
         try {
-            const res = await fetch('/redis-lottery-queue/start', {
-                method: 'POST',
-                headers: { 'X-Client-Id': CLIENT_ID },
-            });
-            const data = await res.json();
+            const data = await airlockClient.start();
 
             if (!data.ok) {
                 setStatus(alertHtml('error', errorIcon, data.error || 'Request failed'));
@@ -205,70 +310,22 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
                     window.location.href = '/redis-lottery-queue/success';
                 }, REDIRECT_DELAY);
             } else if (data.status === 'queued') {
-                // Queued — wait for Mercure notification
+                // Queued — wait for turn notification from AirlockClient
                 userState = 'queued';
-                var pos = data.position || '?';
+                const pos = Number.isInteger(data.position) ? data.position : 1;
                 updateSlots(CAPACITY, false);
                 updateBarrier(true);
                 showQueue(pos, Math.max(pos, 1));
                 setStatus(alertHtml('warning', spinnerIcon, 'Waiting in lottery queue...'));
                 setStatusLabel('Queued #' + pos, 'text-warning');
                 positionDiv.innerHTML = '<p class="mt-3 text-sm text-base-content/50">Position: <strong class="text-base-content">' + pos + '</strong></p>';
+                latestClaimNonce = data.reservationNonce || null;
 
-                // Subscribe to Mercure for your_turn event
-                if (data.hubUrl && data.topic) {
-                    var url = new URL(data.hubUrl);
-                    url.searchParams.append('topic', data.topic);
-                    if (data.token) {
-                        // Set JWT as cookie — EventSource can't send Authorization headers
-                        document.cookie = 'mercureAuthorization=' + encodeURIComponent(data.token) + '; path=/.well-known/mercure; SameSite=Strict';
+                if (latestClaimNonce) {
+                    var claimed = await claimReservation(latestClaimNonce);
+                    if (claimed) {
+                        return;
                     }
-                    eventSource = new EventSource(url, { withCredentials: true });
-
-                    eventSource.onmessage = async function (event) {
-                        var msg = JSON.parse(event.data);
-                        if (msg.event === 'your_turn') {
-                            if (eventSource) {
-                                eventSource.close();
-                                eventSource = null;
-                            }
-                            setStatus(alertHtml('info', spinnerIcon, 'Your turn! Claiming slot...'));
-                            setStatusLabel('Claiming...', 'text-info');
-
-                            // Claim the slot by calling start again
-                            try {
-                                var claimRes = await fetch('/redis-lottery-queue/start', {
-                                    method: 'POST',
-                                    headers: { 'X-Client-Id': CLIENT_ID },
-                                });
-                                var claimData = await claimRes.json();
-
-                                if (claimData.ok && claimData.status === 'admitted') {
-                                    userState = 'admitted';
-                                    hideQueue();
-                                    userSlot = 0;
-                                    updateSlots(Math.min(CAPACITY, occupied), true);
-                                    setStatus(alertHtml('success', checkIcon, 'Your turn! Redirecting...'));
-                                    setStatusLabel('Inside', 'text-success');
-                                    positionDiv.innerHTML = '';
-                                    setTimeout(function () {
-                                        window.location.href = '/redis-lottery-queue/success';
-                                    }, REDIRECT_DELAY);
-                                } else {
-                                    // Rare race — someone else grabbed it, re-queue
-                                    setStatus(alertHtml('warning', spinnerIcon, 'Waiting in lottery queue...'));
-                                    setStatusLabel('Queued', 'text-warning');
-                                }
-                            } catch (err) {
-                                setStatus(alertHtml('error', errorIcon, 'Failed to claim slot'));
-                                setStatusLabel('Error', 'text-error');
-                            }
-                        }
-                    };
-
-                    eventSource.onerror = function () {
-                        // Silently reconnect — EventSource handles this
-                    };
                 }
             }
         } catch (err) {
@@ -279,41 +336,41 @@ import { spinnerIcon, checkIcon, errorIcon, warnIcon } from '../lib/alerts.js';
         }
     });
 
-    resetBtn.addEventListener('click', async function () {
-        resetBtn.disabled = true;
-        resetBtn.classList.add('btn-disabled');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', async function () {
+            resetBtn.disabled = true;
+            resetBtn.classList.add('btn-disabled');
 
-        if (eventSource) {
-            eventSource.close();
-            eventSource = null;
-        }
+            airlockClient.reset();
 
-        try {
-            await fetch('/reset', { method: 'GET' });
-        } catch (e) {
-            // ignore
-        }
+            try {
+                await fetch('/reset', { method: 'GET' });
+            } catch (e) {
+                // ignore
+            }
 
-        // Reset visuals
-        setStatus('');
-        positionDiv.innerHTML = '';
-        userSlot = -1;
-        userState = 'idle';
-        liveOccupant = null;
-        queueDepth = 0;
-        occupied = 0;
-        updateSlots(0, false);
-        updateBarrier(false);
-        hideQueue();
-        queueCount.classList.add('hidden');
-        queueCountValue.textContent = '0';
-        eventLog.clear();
-        setStatusLabel('Idle', '');
-        statusLabel.className = 'mt-2 text-2xl font-black text-base-content/30';
+            // Reset visuals
+            setStatus('');
+            positionDiv.innerHTML = '';
+            userSlot = -1;
+            userState = 'idle';
+            liveOccupant = null;
+            queueDepth = 0;
+            latestClaimNonce = null;
+            occupied = 0;
+            updateSlots(0, false);
+            updateBarrier(false);
+            hideQueue();
+            queueCount.classList.add('hidden');
+            queueCountValue.textContent = '0';
+            eventLog.clear();
+            setStatusLabel('Idle', '');
+            statusLabel.className = 'mt-2 text-2xl font-black text-base-content/30';
 
-        goBtn.disabled = false;
-        goBtn.classList.remove('btn-disabled');
-        resetBtn.disabled = false;
-        resetBtn.classList.remove('btn-disabled');
-    });
+            goBtn.disabled = false;
+            goBtn.classList.remove('btn-disabled');
+            resetBtn.disabled = false;
+            resetBtn.classList.remove('btn-disabled');
+        });
+    }
 })();

@@ -6,7 +6,7 @@ namespace Clegginabox\Airlock\Notifier;
 
 final class NullAirlockNotifier implements AirlockNotifierInterface
 {
-    public function notify(string $identifier, string $topic): void
+    public function notify(string $identifier, string $topic, ?string $claimNonce = null): void
     {
     }
 }

@@ -59,6 +59,14 @@
                         <div id="queue-badges" class="flex flex-wrap items-center justify-center gap-3"></div>
                     </div>
 
+                    <airlock-queue-state
+                        id="queue-state"
+                        class="hidden"
+                        hub-url="{{ hubUrl }}"
+                        topic="{{ globalTopic }}"
+                        token="{{ globalToken }}"
+                    ></airlock-queue-state>
+
                     {# Action area #}
                     <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm sm:p-5">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -117,6 +125,8 @@ if ($result-&gt;isAdmitted()) {
 {% endblock %}
 
 {% block scripts %}
-    {{ vite('resources/js/pages/lottery-queue.js') }}
     {{ vite('../resources/js/airlock-event-log.js') }}
+    {{ vite('../resources/js/airlock-join-button.js') }}
+    {{ vite('../resources/js/airlock-queue-state.js') }}
+    {{ vite('resources/js/pages/lottery-queue.js') }}
 {% endblock %}

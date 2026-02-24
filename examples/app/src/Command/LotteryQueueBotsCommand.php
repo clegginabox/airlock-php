@@ -105,34 +105,38 @@ class LotteryQueueBotsCommand extends Command
         }
 
         // Queued — wait for "your_turn" on the SSE stream
-        $notified = $this->waitForYourTurn($body, $botId);
+        $claimNonce = $this->waitForYourTurn($body, $botId);
         $body->close();
 
-        if (!$notified) {
+        if ($claimNonce === null) {
             // Stream closed without notification — check position as fallback
+            $reservationNonce = $this->redisLotteryQueueService->getReservationNonce($botId);
+
+            if ($reservationNonce !== null) {
+                $this->claimSlot($botId, $reservationNonce);
+
+                return;
+            }
+
             $position = $this->redisLotteryQueueService->getPosition($botId);
 
             if ($position === null) {
                 return; // Fell off queue, outer loop will re-enter
             }
 
-            if ($position === 1) {
-                $this->claimSlot($botId);
-            }
-
             return;
         }
 
         // Notified — claim the slot
-        $this->claimSlot($botId);
+        $this->claimSlot($botId, $claimNonce);
     }
 
     /**
      * Read the SSE stream until a "your_turn" event arrives.
      *
-     * Returns true if notified, false if the stream closed unexpectedly.
+     * Returns claim nonce if notified, null if the stream closed unexpectedly.
      */
-    private function waitForYourTurn(mixed $body, string $botId): bool
+    private function waitForYourTurn(mixed $body, string $botId): ?string
     {
         $buffer = '';
 
@@ -146,7 +150,15 @@ class LotteryQueueBotsCommand extends Command
                 $data = $this->parseSseEvent($rawEvent);
 
                 if ($data !== null && ($data['event'] ?? null) === 'your_turn') {
-                    return true;
+                    $claimNonce = $data['claimNonce'] ?? null;
+
+                    if (!is_string($claimNonce) || $claimNonce === '') {
+                        $this->logger->warning("{$botId}: your_turn arrived without claim nonce");
+
+                        return null;
+                    }
+
+                    return $claimNonce;
                 }
             }
         }
@@ -154,7 +166,7 @@ class LotteryQueueBotsCommand extends Command
         // Stream ended without your_turn
         $this->logger->warning("{$botId}: SSE stream closed unexpectedly");
 
-        return false;
+        return null;
     }
 
     /**
@@ -185,9 +197,9 @@ class LotteryQueueBotsCommand extends Command
         }
     }
 
-    private function claimSlot(string $botId): void
+    private function claimSlot(string $botId, string $claimNonce): void
     {
-        $result = $this->redisLotteryQueueService->start($botId);
+        $result = $this->redisLotteryQueueService->claim($botId, $claimNonce);
 
         if ($result->isAdmitted()) {
             $this->holdAndRelease($botId, (string) $result->getToken());
@@ -196,7 +208,7 @@ class LotteryQueueBotsCommand extends Command
         }
 
         // Rare race: someone else grabbed the slot. Will retry on next cycle.
-        $this->logger->info("{$botId}: claim failed (race), will retry next cycle");
+        $this->logger->info("{$botId}: claim failed ({$result->getStatus()}), will retry next cycle");
     }
 
     private function holdAndRelease(string $botId, string $token): void
@@ -219,15 +231,15 @@ class LotteryQueueBotsCommand extends Command
             return;
         }
 
-        // Wait briefly and try once more
+        // Wait for reservation nonce then claim once.
         delay(5);
-        $result = $this->redisLotteryQueueService->start($botId);
+        $claimNonce = $this->redisLotteryQueueService->getReservationNonce($botId);
 
-        if (!$result->isAdmitted()) {
+        if ($claimNonce === null) {
             return;
         }
 
-        $this->holdAndRelease($botId, (string) $result->getToken());
+        $this->claimSlot($botId, $claimNonce);
     }
 
     private function getMercureHubUrl(): string

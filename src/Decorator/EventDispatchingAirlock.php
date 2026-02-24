@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Decorator;
 
 use Clegginabox\Airlock\Airlock;
+use Clegginabox\Airlock\ClaimingAirlock;
+use Clegginabox\Airlock\ClaimResult;
 use Clegginabox\Airlock\EntryResult;
 use Clegginabox\Airlock\Event\EntryAdmittedEvent;
 use Clegginabox\Airlock\Event\EntryQueuedEvent;
@@ -16,7 +18,7 @@ use Clegginabox\Airlock\ReleasingAirlock;
 use Clegginabox\Airlock\Seal\SealToken;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
-final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirlock, RefreshingAirlock
+final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirlock, RefreshingAirlock, ClaimingAirlock
 {
     public function __construct(
         private Airlock $inner,
@@ -76,7 +78,7 @@ final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirloc
 
     public function refresh(SealToken $token, ?float $ttlInSeconds = null): ?SealToken
     {
-        if (! $this->inner instanceof RefreshingAirlock) {
+        if (!$this->inner instanceof RefreshingAirlock) {
             throw new \LogicException(sprintf(
                 'The inner airlock (%s) does not implement %s.',
                 $this->inner::class,
@@ -99,5 +101,46 @@ final readonly class EventDispatchingAirlock implements Airlock, ReleasingAirloc
     public function getTopic(string $identifier): string
     {
         return $this->inner->getTopic($identifier);
+    }
+
+    public function claim(string $identifier, string $reservationNonce): ClaimResult
+    {
+        if (!$this->inner instanceof ClaimingAirlock) {
+            throw new \LogicException(sprintf(
+                'The inner airlock (%s) does not implement %s.',
+                $this->inner::class,
+                ClaimingAirlock::class,
+            ));
+        }
+
+        $result = $this->inner->claim($identifier, $reservationNonce);
+
+        if (!$result->isAdmitted()) {
+            return $result;
+        }
+
+        /** @var SealToken $token */
+        $token = $result->getToken();
+        $this->dispatcher->dispatch(new EntryAdmittedEvent(
+            $this->airlockIdentifier,
+            $identifier,
+            $token,
+            $result->getTopic(),
+        ));
+
+        return $result;
+    }
+
+    public function getReservationNonce(string $identifier): ?string
+    {
+        if (!$this->inner instanceof ClaimingAirlock) {
+            throw new \LogicException(sprintf(
+                'The inner airlock (%s) does not implement %s.',
+                $this->inner::class,
+                ClaimingAirlock::class,
+            ));
+        }
+
+        return $this->inner->getReservationNonce($identifier);
     }
 }

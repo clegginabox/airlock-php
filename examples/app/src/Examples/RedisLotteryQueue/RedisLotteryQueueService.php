@@ -6,6 +6,7 @@ namespace App\Examples\RedisLotteryQueue;
 
 use App\Factory\AirlockFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreToken;
+use Clegginabox\Airlock\ClaimResult;
 use Clegginabox\Airlock\Decorator\EventDispatchingAirlock;
 use Clegginabox\Airlock\EntryResult;
 use Symfony\Component\Mercure\Jwt\LcobucciFactory;
@@ -23,6 +24,16 @@ final class RedisLotteryQueueService
     public function start(string $clientId): EntryResult
     {
         return $this->airlock->enter($clientId);
+    }
+
+    public function claim(string $clientId, string $reservationNonce): ClaimResult
+    {
+        return $this->airlock->claim($clientId, $reservationNonce);
+    }
+
+    public function getReservationNonce(string $clientId): ?string
+    {
+        return $this->airlock->getReservationNonce($clientId);
     }
 
     public function release(string $serializedToken): void

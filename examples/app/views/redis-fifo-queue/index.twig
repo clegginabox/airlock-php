@@ -1,0 +1,138 @@
+{% extends "layout/base.twig" %}
+
+{% block title %}Airlock: FIFO Queue{% endblock %}
+
+{% block body %}
+    <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+        <section class="overflow-hidden rounded-3xl border border-base-300 bg-base-200 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.6)] backdrop-blur">
+            <div class="relative p-6 sm:p-8 lg:p-10">
+                <div class="relative space-y-8">
+
+                    {# Header #}
+                    <div class="space-y-4">
+                        <div class="badge badge-primary">Redis</div>
+                        <div class="badge badge-secondary">Mercure</div>
+                        <div class="badge badge-accent">Symfony Semaphore</div>
+                        <h1 class="text-3xl font-black sm:text-4xl lg:text-5xl">
+                            FIFO Queue
+                        </h1>
+                        <p class="max-w-3xl text-base leading-relaxed text-base-content/70 sm:text-lg">
+                            The proper British queue. Exact arrival order. Deterministic. No cutting, no exceptions.
+                        </p>
+                    </div>
+
+                    {# Stat cards #}
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Inside Limit</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">3 Users</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Draw Cycle</p>
+                            <p class="mt-2 text-2xl font-black text-base-content">~60s</p>
+                        </div>
+                        <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.15em] text-base-content/50">Your Status</p>
+                            <p id="status-label" class="mt-2 text-2xl font-black text-base-content/30">Idle</p>
+                        </div>
+                    </div>
+
+                    {# Airlock chamber visual #}
+                    <div id="chamber" class="rounded-2xl border border-base-300 bg-base-100/50 p-6">
+                        <p class="mb-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-base-content/40">Airlock Chamber</p>
+                        <div class="flex items-center justify-center gap-4 sm:gap-8">
+                            <div id="slot-0" class="slot">Empty</div>
+                            <div id="slot-1" class="slot">Empty</div>
+                            <div id="slot-2" class="slot">Empty</div>
+                        </div>
+                        <div id="barrier" class="barrier open mx-auto mt-5 w-3/4 sm:w-1/2"></div>
+                        <p id="barrier-label" class="mt-2 text-center text-xs font-medium text-base-content/30">Open</p>
+                        <p id="queue-count" class="mt-3 text-center text-xs font-medium text-base-content/30 hidden">
+                            <span id="queue-count-value">0</span> waiting
+                        </p>
+                    </div>
+
+                    {# Queue area (hidden by default) #}
+                    <div id="queue-area" class="hidden rounded-2xl border border-base-300 bg-base-100/50 p-6">
+                        <p class="mb-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-base-content/40">Waiting Queue</p>
+                        <div id="queue-badges" class="flex flex-wrap items-center justify-center gap-3"></div>
+                    </div>
+
+                    <airlock-queue-state
+                        id="queue-state"
+                        class="hidden"
+                        mode="fifo"
+                        hub-url="{{ hubUrl }}"
+                        topic="{{ globalTopic }}"
+                        token="{{ globalToken }}"
+                    ></airlock-queue-state>
+
+                    {# Action area #}
+                    <div class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm sm:p-5">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <airlock-join-button
+                                id="join"
+                                button-class="btn btn-lg btn-primary rounded-full"
+                            ></airlock-join-button>
+                        </div>
+
+                        <div id="status" aria-live="polite"></div>
+                        <div id="position"></div>
+                    </div>
+
+                    <div class="rounded-2xl border border-base-300 bg-base-100/50 p-6">
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-base-content/40">Event Log</p>
+                        <airlock-event-log
+                            id="event-log"
+                            hub-url="{{ hubUrl }}"
+                            topic="{{ globalTopic }}"
+                            token="{{ globalToken }}"
+                            max-entries="200"
+                            placeholder="No events yet"
+                        ></airlock-event-log>
+                    </div>
+
+                    {# Code snippet #}
+                    <div class="collapse collapse-arrow rounded-2xl border border-base-300 bg-base-100/50">
+                        <input type="checkbox" />
+                        <div class="collapse-title text-sm font-semibold uppercase tracking-[0.12em] text-base-content/50">
+                            How It Works
+                        </div>
+                        <div class="collapse-content">
+                            <pre class="!m-0 rounded-xl"><code class="language-php">
+$seal = new SymfonySemaphoreSeal(
+    factory: new SemaphoreFactory(new SemaphoreRedisStore($redis)),
+    limit: 3,
+    weight: 1,
+    ttlInSeconds: 60,
+    autoRelease: false,
+);
+
+$airlock = new QueueAirlock(
+    seal: $seal,
+    queue: new FifoQueue(new RedisFifoQueueStore($redis)),
+    topicPrefix: RedisFifoQueue::NAME->value,
+    reservations: new RedisReservationStore($redis),
+);
+
+$result = $airlock-&gt;enter($userId);
+
+if ($result-&gt;isAdmitted()) {
+    // You're in — serve the page
+} else {
+    // Queued — wait for Mercure notification
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+    {{ vite('../resources/js/airlock-event-log.js') }}
+    {{ vite('../resources/js/airlock-join-button.js') }}
+    {{ vite('../resources/js/airlock-queue-state.js') }}
+    {{ vite('resources/js/pages/fifo-queue.js') }}
+{% endblock %}

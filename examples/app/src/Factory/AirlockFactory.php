@@ -5,26 +5,28 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Examples\GlobalLock\GlobalLock;
+use App\Examples\RedisFifoQueue\RedisFifoQueue;
 use App\Examples\RedisLotteryQueue\RedisLotteryQueue;
 use App\Examples\TrafficControl\TrafficControl;
 use Clegginabox\Airlock\Airlock;
-use Clegginabox\Airlock\Bridge\Mercure\MercureAirlockNotifier;
-use Clegginabox\Airlock\Bridge\Symfony\Mercure\SymfonyMercureHubFactory;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyLockSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonyRateLimiterSeal;
 use Clegginabox\Airlock\Bridge\Symfony\Seal\SymfonySemaphoreSeal;
 use Clegginabox\Airlock\Decorator\EventDispatchingAirlock;
 use Clegginabox\Airlock\Decorator\LoggingAirlock;
-use Clegginabox\Airlock\Notifier\NullAirlockNotifier;
 use Clegginabox\Airlock\OpportunisticAirlock;
+use Clegginabox\Airlock\Queue\FifoQueue;
 use Clegginabox\Airlock\Queue\LotteryQueue;
+use Clegginabox\Airlock\Queue\Storage\Fifo\RedisFifoQueueStore;
 use Clegginabox\Airlock\Queue\Storage\Lottery\RedisLotteryQueueStore;
 use Clegginabox\Airlock\QueueAirlock;
 use Clegginabox\Airlock\RateLimitingAirlock;
+use Clegginabox\Airlock\Reservation\RedisReservationStore;
 use Clegginabox\Airlock\Seal\CompositeSeal;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use Redis;
+use Spiral\RoadRunner\Metrics\MetricsInterface;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\RedisStore as LockRedisStore;
@@ -38,8 +40,13 @@ use Symfony\Component\Semaphore\Store\RedisStore as SemaphoreRedisStore;
  */
 class AirlockFactory
 {
+    private const int REDIS_LOTTERY_DEFAULT_LIMIT = 1;
+    private const int REDIS_LOTTERY_DEFAULT_TTL = 10;
+    private const int REDIS_LOTTERY_DEFAULT_CLAIM_WINDOW = 5;
+
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
+        private MetricsInterface $metrics,
         private readonly LoggerInterface $logger,
         private Redis $redis,
     ) {
@@ -132,9 +139,9 @@ class AirlockFactory
      * Airlock: QueueAirlock
      */
     public function redisLotteryQueue(
-        int $limit = 3,
-        int $ttl = 60,
-        int $claimWindow = 10,
+        int $limit = self::REDIS_LOTTERY_DEFAULT_LIMIT,
+        int $ttl = self::REDIS_LOTTERY_DEFAULT_TTL,
+        int $claimWindow = self::REDIS_LOTTERY_DEFAULT_CLAIM_WINDOW,
     ): QueueAirlock {
         $seal = new SymfonySemaphoreSeal(
             factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
@@ -154,13 +161,23 @@ class AirlockFactory
             ),
         );
 
-        return new QueueAirlock($seal, $queue, new NullAirlockNotifier());
+        $reservations = new RedisReservationStore(
+            redis: $this->redis,
+            keyPrefix: RedisLotteryQueue::RESERVATION_KEY_PREFIX->value,
+        );
+
+        return new QueueAirlock(
+            $seal,
+            $queue,
+            topicPrefix: '/redis-lottery-queue',
+            reservations: $reservations,
+        );
     }
 
     public function redisLotteryQueueWithMercure(
-        int $limit = 1,
-        int $ttl = 10,
-        int $claimWindow = 5,
+        int $limit = self::REDIS_LOTTERY_DEFAULT_LIMIT,
+        int $ttl = self::REDIS_LOTTERY_DEFAULT_TTL,
+        int $claimWindow = self::REDIS_LOTTERY_DEFAULT_CLAIM_WINDOW,
     ): EventDispatchingAirlock {
         $seal = new SymfonySemaphoreSeal(
             factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
@@ -180,17 +197,73 @@ class AirlockFactory
             ),
         );
 
-        $hubUrl = getenv('MERCURE_HUB_URL') ?: 'http://localhost/.well-known/mercure';
-        $jwtSecret = getenv('MERCURE_JWT_SECRET') ?: 'airlock-mercure-secret-32chars-minimum';
-        $hub = SymfonyMercureHubFactory::create($hubUrl, $jwtSecret);
+        $reservations = new RedisReservationStore(
+            redis: $this->redis,
+            keyPrefix: RedisLotteryQueue::RESERVATION_KEY_PREFIX->value,
+        );
+
+        $loggingDecorator = new LoggingAirlock(
+            new QueueAirlock(
+                $seal,
+                $queue,
+                topicPrefix: '/redis-lottery-queue',
+                reservations: $reservations,
+            ),
+            $this->logger,
+        );
 
         return new EventDispatchingAirlock(
-            new LoggingAirlock(
-                new QueueAirlock($seal, $queue, new MercureAirlockNotifier($hub)),
-                $this->logger
-            ),
+            $loggingDecorator,
             $this->dispatcher,
             RedisLotteryQueue::NAME->value,
+        );
+    }
+
+    public function redisFifoQueue(): QueueAirlock
+    {
+        $seal = new SymfonySemaphoreSeal(
+            factory: new SemaphoreFactory(new SemaphoreRedisStore($this->redis)),
+            resource: RedisFifoQueue::RESOURCE->value,
+            limit: 3,
+            weight: 1,
+            ttlInSeconds: 60,
+            autoRelease: false,
+        );
+
+        $queue = new FifoQueue(
+            new RedisFifoQueueStore(
+                redis: $this->redis,
+                listKey: RedisFifoQueue::LIST_KEY->value,
+                setKey: RedisFifoQueue::SET_KEY->value,
+            )
+        );
+
+        $reservations = new RedisReservationStore(
+            redis: $this->redis,
+            keyPrefix: RedisFifoQueue::RESERVATION_KEY_PREFIX->value,
+        );
+
+        return new QueueAirlock(
+            seal: $seal,
+            queue: $queue,
+            topicPrefix: RedisFifoQueue::NAME->value,
+            reservations: $reservations,
+        );
+    }
+
+    public function redisFifoQueueWithMercure(): EventDispatchingAirlock
+    {
+        $airlock = $this->redisFifoQueue();
+
+        $loggingDecorator = new LoggingAirlock(
+            inner: $airlock,
+            logger: $this->logger,
+        );
+
+        return new EventDispatchingAirlock(
+            inner: $loggingDecorator,
+            dispatcher: $this->dispatcher,
+            airlockIdentifier: RedisFifoQueue::NAME->value,
         );
     }
 }

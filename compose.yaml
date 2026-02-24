@@ -1,6 +1,7 @@
 services:
   gateway:
     image: caddy:2-alpine
+    restart: unless-stopped
     volumes:
       - ./examples/Caddyfile:/etc/caddy/Caddyfile:ro
     ports:
@@ -14,6 +15,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -21,6 +23,8 @@ services:
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-http://localhost/.well-known/mercure}
       VITE_DEV: ${VITE_DEV:-false}
+    ports:
+      - "2112:2112"
     volumes:
       - ./examples:/app/examples
       - ./src:/app/src
@@ -35,6 +39,7 @@ services:
       context: .
       dockerfile: Dockerfile
     command: supervisord -n -c /app/examples/supervisord.conf
+    restart: unless-stopped
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -51,6 +56,7 @@ services:
 
   mercure:
     image: dunglas/mercure
+    restart: unless-stopped
     environment:
       SERVER_NAME: :80
       MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-airlock-mercure-secret-32chars-minimum}
@@ -62,14 +68,31 @@ services:
 
   centrifugo:
     image: centrifugo/centrifugo:v5
+    restart: unless-stopped
     volumes:
       - ./examples/config.json:/centrifugo/config.json:ro
     command: centrifugo --config config.json
 
   redis:
     image: redis:8.4.0
+    restart: unless-stopped
     ports:
       - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:v3.5.1
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+
 
   e2e:
     build:
@@ -86,3 +109,6 @@ services:
       - gateway
     command: >
       sh -c "npm install && npx playwright test"
+
+volumes:
+  prometheus_data:

@@ -83,4 +83,12 @@ class RedisLotteryQueueStore implements LotteryQueueStorage
 
         return (int) $this->redis->sCard($this->setKey);
     }
+
+    /**
+     * @return list<string>
+     */
+    public function all(): array
+    {
+        return array_values($this->redis->sMembers($this->setKey));
+    }
 }

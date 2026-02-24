@@ -6,5 +6,5 @@ namespace Clegginabox\Airlock\Notifier;
 
 interface AirlockNotifierInterface
 {
-    public function notify(string $identifier, string $topic): void;
+    public function notify(string $identifier, string $topic, ?string $claimNonce = null): void;
 }

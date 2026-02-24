@@ -6,8 +6,9 @@ namespace Clegginabox\Airlock\Tests\Unit;
 
 use Clegginabox\Airlock\Notifier\AirlockNotifierInterface;
 use Clegginabox\Airlock\Queue\LotteryQueue;
+use Clegginabox\Airlock\Queue\QueueInterface;
 use Clegginabox\Airlock\QueueAirlock;
-use Clegginabox\Airlock\Seal\RefreshableSeal;
+use Clegginabox\Airlock\Reservation\ReservationStoreInterface;
 use Clegginabox\Airlock\Seal\ReleasableSeal;
 use Clegginabox\Airlock\Seal\Seal;
 use Clegginabox\Airlock\Seal\SealToken;
@@ -18,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 class QueueAirlockTest extends TestCase
 {
     /**
-     * @var MockObject&Seal&ReleasableSeal&RefreshableSeal
+     * @var MockObject&Seal&ReleasableSeal
      */
     private MockObject $mockSeal;
 
@@ -26,13 +27,11 @@ class QueueAirlockTest extends TestCase
 
     private MockObject&LotteryQueue $mockQueue;
 
-    private MockObject&AirlockNotifierInterface $mockNotifier;
-
     private QueueAirlock $airlock;
 
     protected function setUp(): void
     {
-        /** @var MockObject&Seal&ReleasableSeal&RefreshableSeal $mockSeal */
+        /** @var MockObject&Seal&ReleasableSeal $mockSeal */
         $mockSeal = $this->createMockForIntersectionOfInterfaces([
             Seal::class,
             ReleasableSeal::class,
@@ -57,13 +56,12 @@ class QueueAirlockTest extends TestCase
             }
         };
 
-        $this->mockNotifier = $this->createMock(AirlockNotifierInterface::class);
         $this->mockQueue = $this->createMock(LotteryQueue::class);
 
         /** @var Seal&ReleasableSeal $seal */
         $seal = $this->mockSeal;
 
-        $this->airlock = new QueueAirlock($seal, $this->mockQueue, $this->mockNotifier);
+        $this->airlock = new QueueAirlock($seal, $this->mockQueue);
     }
 
     #[AllowMockObjectsWithoutExpectations]
@@ -137,32 +135,11 @@ class QueueAirlockTest extends TestCase
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function testReleaseWithNullNextPassenger(): void
+    public function testRelease(): void
     {
         $this->mockSeal->expects($this->once())
             ->method('release')
             ->with($this->mockSealToken);
-
-        $this->mockQueue->expects($this->once())
-            ->method('peek')
-            ->willReturn(null);
-
-        $this->airlock->release($this->mockSealToken);
-    }
-
-    public function testReleaseWithNextPassenger(): void
-    {
-        $this->mockSeal->expects($this->once())
-            ->method('release')
-            ->with($this->mockSealToken);
-
-        $this->mockQueue->expects($this->once())
-            ->method('peek')
-            ->willReturn('identifier');
-
-        $this->mockNotifier->expects($this->once())
-            ->method('notify')
-            ->with('identifier', '/waiting-room/identifier');
 
         $this->airlock->release($this->mockSealToken);
     }
@@ -176,5 +153,179 @@ class QueueAirlockTest extends TestCase
             ->willReturn(1);
 
         $this->assertSame(1, $this->airlock->getPosition('identifier'));
+    }
+
+    public function testCreateSupervisorUsesAirlockTopicPrefix(): void
+    {
+        $this->mockQueue->expects($this->once())
+            ->method('peek')
+            ->willReturn('identifier');
+
+        $this->mockSeal->expects($this->once())
+            ->method('tryAcquire')
+            ->willReturn($this->mockSealToken);
+
+        $this->mockSeal->expects($this->once())
+            ->method('release')
+            ->with($this->mockSealToken);
+
+        $notifier = $this->createMock(AirlockNotifierInterface::class);
+        $notifier->expects($this->once())
+            ->method('notify')
+            ->with('identifier', '/custom-topic/identifier', null);
+
+        $seal = $this->mockSeal;
+
+        $airlock = new QueueAirlock($seal, $this->mockQueue, '/custom-topic');
+        $supervisor = $airlock->createSupervisor($notifier);
+
+        $result = $supervisor->tick();
+
+        $this->assertSame('identifier', $result->notified);
+    }
+
+    public function testCreateSupervisorSkipsNotificationWhenNoSlotIsAvailable(): void
+    {
+        $this->mockQueue->expects($this->once())
+            ->method('peek')
+            ->willReturn('identifier');
+
+        $this->mockSeal->expects($this->once())
+            ->method('tryAcquire')
+            ->willReturn(null);
+
+        $this->mockSeal->expects($this->never())
+            ->method('release');
+
+        $notifier = $this->createMock(AirlockNotifierInterface::class);
+        $notifier->expects($this->never())
+            ->method('notify');
+
+        $seal = $this->mockSeal;
+
+        $airlock = new QueueAirlock($seal, $this->mockQueue, '/custom-topic');
+        $supervisor = $airlock->createSupervisor($notifier);
+
+        $result = $supervisor->tick();
+
+        $this->assertNull($result->notified);
+        $this->assertSame([], $result->evicted);
+    }
+
+    public function testCreateSupervisorRequiresEnumerableQueue(): void
+    {
+        $nonEnumerableQueue = $this->createMock(QueueInterface::class);
+        $notifier = $this->createMock(AirlockNotifierInterface::class);
+
+        $seal = $this->mockSeal;
+
+        $airlock = new QueueAirlock($seal, $nonEnumerableQueue);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('does not implement');
+
+        $airlock->createSupervisor($notifier);
+    }
+
+    public function testClaimAdmitsWhenReservationMatches(): void
+    {
+        $reservations = $this->createMock(ReservationStoreInterface::class);
+
+        $reservations->expects($this->once())
+            ->method('isReservedFor')
+            ->with('identifier', 'nonce-1')
+            ->willReturn(true);
+
+        $this->mockSeal->expects($this->once())
+            ->method('tryAcquire')
+            ->willReturn($this->mockSealToken);
+
+        $reservations->expects($this->once())
+            ->method('consume')
+            ->with('identifier', 'nonce-1')
+            ->willReturn(true);
+
+        $this->mockQueue->expects($this->once())
+            ->method('remove')
+            ->with('identifier');
+
+        $seal = $this->mockSeal;
+        $airlock = new QueueAirlock($seal, $this->mockQueue, '/custom-topic', $reservations);
+
+        $result = $airlock->claim('identifier', 'nonce-1');
+
+        $this->assertTrue($result->isAdmitted());
+        $this->assertSame($this->mockSealToken, $result->getToken());
+    }
+
+    public function testClaimReturnsMissedWhenReservationDoesNotMatch(): void
+    {
+        $reservations = $this->createMock(ReservationStoreInterface::class);
+        $reservations->expects($this->once())
+            ->method('isReservedFor')
+            ->with('identifier', 'bad-nonce')
+            ->willReturn(false);
+
+        $this->mockSeal->expects($this->never())
+            ->method('tryAcquire');
+
+        $seal = $this->mockSeal;
+        $airlock = new QueueAirlock($seal, $this->mockQueue, '/custom-topic', $reservations);
+
+        $result = $airlock->claim('identifier', 'bad-nonce');
+
+        $this->assertTrue($result->isMissed());
+    }
+
+    public function testClaimReturnsUnavailableWhenSlotCannotBeAcquired(): void
+    {
+        $reservations = $this->createMock(ReservationStoreInterface::class);
+        $reservations->expects($this->once())
+            ->method('isReservedFor')
+            ->with('identifier', 'nonce-1')
+            ->willReturn(true);
+
+        $this->mockSeal->expects($this->once())
+            ->method('tryAcquire')
+            ->willReturn(null);
+
+        $reservations->expects($this->never())
+            ->method('consume');
+
+        $seal = $this->mockSeal;
+        $airlock = new QueueAirlock($seal, $this->mockQueue, '/custom-topic', $reservations);
+
+        $result = $airlock->claim('identifier', 'nonce-1');
+
+        $this->assertTrue($result->isUnavailable());
+    }
+
+    public function testEnterClearsReservationWhenUserIsAdmitted(): void
+    {
+        $reservations = $this->createMock(ReservationStoreInterface::class);
+
+        $this->mockQueue->expects($this->once())
+            ->method('add')
+            ->with('identifier')
+            ->willReturn(1);
+
+        $this->mockSeal->expects($this->once())
+            ->method('tryAcquire')
+            ->willReturn($this->mockSealToken);
+
+        $this->mockQueue->expects($this->once())
+            ->method('remove')
+            ->with('identifier');
+
+        $reservations->expects($this->once())
+            ->method('clear')
+            ->with('identifier');
+
+        $seal = $this->mockSeal;
+        $airlock = new QueueAirlock($seal, $this->mockQueue, '/custom-topic', $reservations);
+
+        $result = $airlock->enter('identifier');
+
+        $this->assertTrue($result->isAdmitted());
     }
 }

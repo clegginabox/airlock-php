@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Clegginabox\Airlock\Decorator;
 
 use Clegginabox\Airlock\Airlock;
+use Clegginabox\Airlock\ClaimingAirlock;
+use Clegginabox\Airlock\ClaimResult;
 use Clegginabox\Airlock\EntryResult;
 use Clegginabox\Airlock\RefreshingAirlock;
 use Clegginabox\Airlock\ReleasingAirlock;
 use Clegginabox\Airlock\Seal\SealToken;
 use Psr\Log\LoggerInterface;
 
-final readonly class LoggingAirlock implements Airlock, ReleasingAirlock, RefreshingAirlock
+final readonly class LoggingAirlock implements Airlock, ReleasingAirlock, RefreshingAirlock, ClaimingAirlock
 {
     public function __construct(
         private Airlock $inner,
@@ -98,5 +100,43 @@ final readonly class LoggingAirlock implements Airlock, ReleasingAirlock, Refres
     public function getTopic(string $identifier): string
     {
         return $this->inner->getTopic($identifier);
+    }
+
+    public function claim(string $identifier, string $reservationNonce): ClaimResult
+    {
+        if (!$this->inner instanceof ClaimingAirlock) {
+            throw new \LogicException(sprintf(
+                'The inner airlock (%s) does not implement %s.',
+                $this->inner::class,
+                ClaimingAirlock::class,
+            ));
+        }
+
+        $this->logger->debug('Attempting to claim reservation', [
+            'identifier' => $identifier,
+        ]);
+
+        $result = $this->inner->claim($identifier, $reservationNonce);
+
+        $this->logger->info('Claim attempt completed', [
+            'identifier' => $identifier,
+            'status' => $result->getStatus(),
+            'token' => $result->getToken() !== null ? (string) $result->getToken() : null,
+        ]);
+
+        return $result;
+    }
+
+    public function getReservationNonce(string $identifier): ?string
+    {
+        if (!$this->inner instanceof ClaimingAirlock) {
+            throw new \LogicException(sprintf(
+                'The inner airlock (%s) does not implement %s.',
+                $this->inner::class,
+                ClaimingAirlock::class,
+            ));
+        }
+
+        return $this->inner->getReservationNonce($identifier);
     }
 }
