@@ -1,6 +1,4 @@
 FROM spiralscout/roadrunner AS roadrunner
-# OR
-# FROM ghcr.io/roadrunner-server/roadrunner as roadrunner
 
 FROM node:22-alpine AS node-build
 
@@ -28,7 +26,7 @@ COPY . /app
 
 WORKDIR /app/examples
 
-#RUN composer install --no-interaction --prefer-dist --ignore-platform-reqs
+RUN composer install --no-interaction --prefer-dist --ignore-platform-reqs
 
 COPY --from=node-build /app/examples/public/build ./public/build
 COPY --from=roadrunner /usr/bin/rr /usr/local/bin/rr
