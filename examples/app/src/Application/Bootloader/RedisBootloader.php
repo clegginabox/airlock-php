@@ -17,10 +17,15 @@ final class RedisBootloader extends Bootloader
     private function createRedis(EnvironmentInterface $env): Redis
     {
         $redis = new Redis();
+
         $redis->connect(
             $env->get('REDIS_HOST', '127.0.0.1'),
             (int) $env->get('REDIS_PORT', 6379),
         );
+
+        if ($env->get('REDIS_PASSWORD') !== null) {
+            $redis->auth($env->get('REDIS_PASSWORD'));
+        }
 
         return $redis;
     }
