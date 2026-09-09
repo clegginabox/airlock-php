@@ -33,6 +33,7 @@ class OpportunisticAirlockTest extends TestCase
             RefreshableSeal::class,
         ]);
 
+
         $this->mockSeal = $mockSeal;
 
         $this->mockSealToken = new class implements SealToken {
